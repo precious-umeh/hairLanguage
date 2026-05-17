@@ -236,7 +236,17 @@ export const adminConsultationAlert = (name, contact, message) => {
   `;
 };
 
-export const otpTemplate = (name, otp) => {
+export const otpTemplate = (name, otp, type = "registration") => {
+  const currentYear = new Date().getFullYear();
+
+  // Define content based on type
+  const isReset = type === "reset";
+
+  const title = isReset ? "Reset Your Password" : "Verify Your Email";
+  const bodyText = isReset
+    ? "We received a request to reset your password. Use the code below to proceed with the reset. This code will expire in 10 minutes."
+    : "Thank you for joining Hair Language. Use the code below to complete your registration. This code will expire in 10 minutes.";
+
   return `
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f9f9f9; padding: 20px; color: #333;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #eee;">
@@ -246,10 +256,10 @@ export const otpTemplate = (name, otp) => {
         </div>
 
         <div style="padding: 40px; text-align: center;">
-          <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Verify Your Email</h2>
+          <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">${title}</h2>
           <p style="font-size: 16px; line-height: 1.5; color: #666;">Hello ${name},</p>
           <p style="font-size: 16px; line-height: 1.5; color: #666; margin-bottom: 30px;">
-            Thank you for joining Hair Language. Use the code below to complete your registration. This code will expire in 10 minutes.
+            ${bodyText}
           </p>
           
           <div style="background-color: #f4f4f4; padding: 20px; border-radius: 4px; display: inline-block; letter-spacing: 5px; font-size: 32px; font-weight: bold; color: #1a1a1a; border: 1px dashed #ccc;">
@@ -263,7 +273,7 @@ export const otpTemplate = (name, otp) => {
 
         <div style="background-color: #f9f9f9; padding: 20px; text-align: center; border-top: 1px solid #eee;">
           <p style="font-size: 12px; color: #aaa; margin: 0;">
-            &copy; 2026 Hair Language. All rights reserved.
+            &copy; ${currentYear} Hair Language. All rights reserved.
           </p>
         </div>
 

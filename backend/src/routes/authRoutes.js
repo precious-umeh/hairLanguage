@@ -6,6 +6,7 @@ import {
   deleteSession,
   disable2FA,
   finalize2FALogin,
+  forgotPassword,
   getActiveSessions,
   getAllUsers,
   getUserProfile,
@@ -15,6 +16,7 @@ import {
   register,
   registerAdmin,
   resendOtp,
+  resetPassword,
   setup2FA,
   updateProfile,
   verifyAndEnable2FA,
@@ -38,10 +40,14 @@ router.post("/cancel-email-update", authMiddleware, cancelEmailUpdate);
 router.post("/2fa/verify", authMiddleware, verifyAndEnable2FA);
 router.post("/2fa/verify-login", finalize2FALogin);
 router.post("/2fa/disable", authMiddleware, disable2FA);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
+
 router.get("/get-users", authMiddleware, adminMiddleWare, getAllUsers);
 router.get("/me", authMiddleware, getUserProfile);
 router.get("/get-sessions", authMiddleware, getActiveSessions);
 router.get("/2fa/setup", authMiddleware, setup2FA);
+
 router.patch(
   "/update-profile",
   authMiddleware,
@@ -49,6 +55,7 @@ router.patch(
   updateProfile,
 );
 router.patch("/change-password", authMiddleware, changePassword);
+
 router.delete("/delete-account", authMiddleware, deleteAccount);
 router.delete("/delete-session/:sessionId", authMiddleware, deleteSession);
 

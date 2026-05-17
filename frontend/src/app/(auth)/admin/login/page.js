@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useAuth } from "@/providers/admin/auth-provider";
 import toast, { Toaster } from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
@@ -116,9 +117,12 @@ export default function AdminLogin() {
                     <label htmlFor="password-input" className="block">
                       Password
                     </label>
-                    <span className="text-xs block cursor-pointer hover:underline underline-offset-4">
-                      Forgot password?
-                    </span>
+
+                    <Link href="/forgot-password?role=admin">
+                      <span className="text-xs block cursor-pointer hover:underline underline-offset-4">
+                        Forgot password?
+                      </span>
+                    </Link>
                   </div>
 
                   <div className="relative flex items-center">

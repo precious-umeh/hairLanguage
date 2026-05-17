@@ -105,9 +105,12 @@ export default function Login() {
                   <label htmlFor="password-input" className="block">
                     Password
                   </label>
-                  <span className="text-xs block cursor-pointer hover:underline underline-offset-4">
-                    Forgot password?
-                  </span>
+
+                  <Link href="/forgot-password?role=user">
+                    <span className="text-xs block cursor-pointer hover:underline underline-offset-4">
+                      Forgot password?
+                    </span>
+                  </Link>
                 </div>
 
                 <div className="relative flex items-center">

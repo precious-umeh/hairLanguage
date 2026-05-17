@@ -728,6 +728,118 @@ export async function changePassword(req, res) {
   }
 }
 
+export async function forgotPassword(req, res) {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+
+    const emailNormalized = email.toLowerCase().trim();
+    const user = await User.findOne({ email: emailNormalized });
+
+    // For security, don't reveal if a user doesn't exist.
+    if (!user) {
+      return res.status(200).json({
+        message:
+          "If an account is associated with this email. A verification code has been sent.",
+      });
+    }
+
+    // Rate Limiting
+    const canRequestAt = new Date(user.updatedAt).getTime() + 120 * 1000;
+    if (Date.now() < canRequestAt) {
+      return res.status(429).json({
+        message: "Please wait two minutes before requesting another code.",
+      });
+    }
+
+    // Generate OTP
+    const rawOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = await bcrypt.hash(rawOtp, 10);
+    const otpExpirationTime = Date.now() + 10 * 60 * 1000;
+
+    // Save OTP to user model
+    user.otp = hashedOtp;
+    user.otpExpiry = otpExpirationTime;
+    await user.save();
+
+    // Send email
+    await sendEmail({
+      to: emailNormalized,
+      subject: "Hair Language | Password Reset Code",
+      textContent: `Your password reset code is: ${rawOtp}`,
+      htmlContent: otpTemplate(user.name, rawOtp, "reset"),
+    });
+
+    res.status(200).json({ message: "Verification code sent to your email." });
+  } catch (error) {
+    console.error("FORGOT PASSWORD ERROR:", error);
+    res.status(500).json({
+      message: "Error processing request.",
+      error: error.message,
+    });
+  }
+}
+
+export async function resetPassword(req, res) {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    const emailNormalized = email.toLowerCase().trim();
+    const user = await User.findOne({ email: emailNormalized });
+
+    if (!user || !user.otp || !user.otpExpiry) {
+      return res
+        .status(400)
+        .json({ message: "Invalid request or OTP expired." });
+    }
+
+    // Check Expiry
+    if (new Date(user.otpExpiry) < Date.now()) {
+      return res
+        .status(400)
+        .json({ message: "OTP expired. Please request a new one." });
+    }
+
+    // Verify OTP
+    const isMatch = await bcrypt.compare(String(otp), user.otp);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    // Hash New Password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update user
+    user.password = hashedPassword;
+    user.passwordLastChanged = Date.now();
+
+    // Clear OTP fields
+    user.otp = null;
+    user.otpExpiry = null;
+
+    await user.save();
+
+    res.status(200).json({
+      message:
+        "Password reset successful. You can log in with your new password.",
+    });
+  } catch (error) {
+    console.error("RESET PASSWORD ERROR:", error);
+    res.status(500).json({
+      message: "Error resetting password.",
+      error: error.message,
+    });
+  }
+}
+
 export async function deleteAccount(req, res) {
   try {
     const userId = req.user.id;
