@@ -145,9 +145,18 @@ function ProductItem({ product, onDelete, onEdit, getTotalStock }) {
           <div className="text-sm font-medium text-(--textMuted)">
             Stock:{" "}
             <span
-              className={totalStock > 10 ? "text-green-500" : "text-red-500"}
+              className={
+                totalStock === 0
+                  ? "text-red-500"
+                  : totalStock <= 10
+                    ? "text-orange-500"
+                    : "text-green-500"
+              }
             >
-              {totalStock} <span className="hidden sm:inline">units</span>
+              {totalStock}{" "}
+              <span className="hidden sm:inline">
+                {totalStock === 1 ? "unit" : "units"}
+              </span>
             </span>
           </div>
         </div>
