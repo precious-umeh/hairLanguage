@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import server, { BASE_URL } from "../utils/axiosClient";
 import toast, { Toaster } from "react-hot-toast";
 import DeleteModal from "@/app/(admin)/admin/components/deleteModal";
+import { formatPrice } from "../utils/formatPrice";
 
 export default function ProfilePage() {
   const { isAuthenticated, loading, user, logout } = useAuth();
@@ -176,7 +177,7 @@ export default function ProfilePage() {
     }
 
     return () => clearInterval(interval);
-  }, [showOtpModal, timer === 0]);
+  }, [showOtpModal, timer]);
 
   const formatTime = function (seconds) {
     const mins = Math.floor(seconds / 60);
@@ -200,25 +201,101 @@ export default function ProfilePage() {
     }
   };
 
-  // Handle Account Deletion
-  const handleDelete = async function () {
+  // =======================================
+  // Fetch and Sync Orders and Consultations of the User
+
+  const fetchData = useCallback(
+    async function () {
+      if (!isAuthenticated || !user) return;
+      setIsDataLoading(true);
+
+      try {
+        const [orderRes, bookingRes] = await Promise.all([
+          server.get("/api/orders/my-orders"),
+          server.get("/api/my-consultations"),
+        ]);
+
+        setOrders(orderRes.data.data || []);
+        setConsultations(bookingRes.data.bookings || []);
+      } catch (error) {
+        console.error("Fetch Error:", error);
+        toast.error(
+          error.response?.data?.message || "Error fetching activity data",
+        );
+      } finally {
+        setIsDataLoading(false);
+      }
+    },
+    [isAuthenticated, user],
+  );
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // =======================================
+  // Delete Handler
+
+  const handleConfirmDelete = async function () {
+    const { type, id } = itemToDelete;
+
+    if (!type || !id) return;
+
     setIsDeleting(true);
 
     try {
-      const response = await server.delete("/auth/delete-account");
-      toast.success(response.data.message || "Account deleted successfully.");
+      // ===== ACCOUNT DELETE =====
+      if (type === "account") {
+        const response = await server.delete("/auth/delete-account");
 
-      setItemToDelete(null);
+        toast.success(response.data.message || "Account deleted successfully.");
 
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 1500);
+        setItemToDelete({ type: null, id: null });
+
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
+
+        return;
+      }
+
+      // ===== CONSULTATION DELETE =====
+      if (type === "consultation") {
+        await server.patch(`/api/my-consultations/${id}/hide`);
+
+        setConsultations((prev) => prev.filter((item) => item._id !== id));
+
+        toast.success("Consultation removed from history.");
+      }
+
+      // ===== ORDER DELETE =====
+      if (type === "order") {
+        await server.patch(`api/orders/${id}/hide`);
+
+        setOrders((prev) => prev.filter((item) => item._id !== id));
+
+        toast.success("Order removed from history.");
+      }
+
+      setItemToDelete({ type: null, id: null });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete account.");
+      console.error("Delete Error:", error);
+      toast.error(error.response?.data?.message || "Delete action failed.");
     } finally {
       setIsDeleting(false);
     }
   };
+
+  const navTabs = [
+    { id: "profile", label: "My Profile", icon: <UserIcon size={18} /> },
+    { id: "orders", label: "Orders", icon: <Package size={18} /> },
+    {
+      id: "consultations",
+      label: "Consultations",
+      icon: <Calendar size={18} />,
+    },
+    { id: "security", label: "Security", icon: <Settings size={18} /> },
+  ];
 
   // Redirect if not logged in
   useEffect(() => {
@@ -240,66 +317,6 @@ export default function ProfilePage() {
     return null;
   }
 
-  // =======================================
-  // Fetch and Sync Orders and Consultations of the User
-
-  const fetchData = useCallback(
-    async function () {
-      if (!isAuthenticated || !user) return;
-      setIsDataLoading(true);
-
-      try {
-        const response = await server.get("/api/my-consultations");
-        setConsultations(response.data.bookings || []);
-      } catch (error) {
-        console.error("Fetch error:", error);
-        // toast.error(
-        //   error.response?.data?.message || "Error fetching activity data.",
-        // );
-      } finally {
-        setIsDataLoading(false);
-      }
-    },
-    [isAuthenticated, user],
-  );
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  // Handle User Delete History
-  const handleBookingDelete = async function () {
-    // if (!confirm("Remove this activity from your profile?")) return;
-    const id = itemToDelete.id;
-    if (!id) return;
-
-    setIsDeleting(true);
-    try {
-      await server.patch(`/api/my-consultations/${id}/hide`);
-      toast.success("Removed from history.");
-
-      setConsultations((prev) => prev.filter((item) => item._id !== id));
-      setItemToDelete({ type: null, id: null });
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to remove activity.",
-      );
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const navTabs = [
-    { id: "profile", label: "My Profile", icon: <UserIcon size={18} /> },
-    { id: "orders", label: "Orders", icon: <Package size={18} /> },
-    {
-      id: "consultations",
-      label: "Consultations",
-      icon: <Calendar size={18} />,
-    },
-    { id: "security", label: "Security", icon: <Settings size={18} /> },
-  ];
-
   return (
     <div className="max-w-6xl mx-auto py-15 px-[5vw]">
       <Toaster position="top-left" />
@@ -314,8 +331,9 @@ export default function ProfilePage() {
               <img
                 src={
                   previewUrl ||
-                  `${BASE_URL}${user?.avatar}` ||
-                  `/images/user.png`
+                  (user?.avatar
+                    ? `${BASE_URL}${user?.avatar}`
+                    : `/images/user.png`)
                 }
                 alt="Avatar"
                 className="w-full h-full object-cover"
@@ -521,13 +539,30 @@ export default function ProfilePage() {
 
         {activeTab === "orders" && (
           <div className="fade-up">
-            <EmptyState
-              icon={<Package size={48} />}
-              title="No orders yet"
-              desc="Items you purchase will appear here."
-              btnText="Start Shopping"
-              onAction={() => router.push("/shop")}
-            />
+            {isDataLoading ? (
+              <div className="flex flex-col items-center py-20 text-(--textMuted)">
+                <Loader2 size={32} className="animate-spin mb-2" />
+                <p className="text-sm">Fetching your history...</p>
+              </div>
+            ) : orders.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4">
+                {orders.map((item) => (
+                  <OrderCard
+                    key={item._id}
+                    order={item}
+                    onRemove={(id) => setItemToDelete({ type: "order", id })}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={<Package size={48} />}
+                title="No orders yet"
+                desc="Items you purchase will appear here."
+                btnText="Start Shopping"
+                onAction={() => router.push("/shop")}
+              />
+            )}
           </div>
         )}
 
@@ -684,19 +719,21 @@ export default function ProfilePage() {
         <DeleteModal
           isOpen={itemToDelete.type !== null}
           onClose={() => setItemToDelete({ type: null, id: null })}
-          onConfirm={
-            itemToDelete.type === "account" ? handleDelete : handleBookingDelete
-          }
+          onConfirm={handleConfirmDelete}
           loading={isDeleting}
           title={
             itemToDelete.type === "account"
               ? "Delete your account?"
-              : "Remove from history"
+              : itemToDelete.type === "order"
+                ? "Remove order from history?"
+                : "Remove consultation from history?"
           }
           description={
             itemToDelete.type === "account"
               ? "This will permanently delete all your data, orders, and consultations. This action cannot be undone"
-              : "This activity will be removed from your profile. This action cannot be undone."
+              : itemToDelete.type === "order"
+                ? "This order will be removed from your profile. This action cannot be undone."
+                : "This consultation will be removed from your profile. This action cannot be undone."
           }
         />
       </div>
@@ -879,6 +916,67 @@ function ConsultationCard({ consultation, onClick }) {
   );
 }
 
+function OrderCard({ order, onRemove }) {
+  const getColorStatus = (status) => {
+    switch (status) {
+      case "paid":
+        return "bg-green-100 text-green-700";
+      case "shipped":
+        return "bg-blue-100 text-blue-700";
+      case "pending":
+        return "bg-orange-100 text-orange-700";
+      case "cancelled":
+        return "bg-red-100 text-red-700";
+      default:
+        return "bg-(--softAsh) text-(--textMuted)";
+    }
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-3xl border border-(--coolGrey) hover:shadow-md transition space-y-4">
+      <div className="flex justify-between items-start">
+        <div>
+          <p className="text-xs text-(--textMuted) uppercase tracking-wider">
+            Order Reference
+          </p>
+          <p className="font-bold text-sm">
+            #{order._id.slice(-8).toUpperCase()}
+          </p>
+        </div>
+        <span
+          className={`text-[10px] uppercase font-bold px-3 py-1 rounded-full ${getColorStatus(order.status)}`}
+        >
+          {order.status}
+        </span>
+      </div>
+
+      <div className="border-t border-b border-(--softAsh) py-3 space-y-2">
+        {order.items.map((item, idx) => (
+          <div key={idx} className="flex justify-between text-sm">
+            <span className="text-(--textMuted)">
+              {item.quantity}x {item.productName}
+            </span>
+            <span className="font-medium">{item.size}"</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex justify-between items-center">
+        <p className="font-black text-(--accent)">
+          Total: {formatPrice(order.totalAmount)}
+        </p>
+
+        <button
+          onClick={() => onRemove(order._id)}
+          className="text-xs font-medium bg-red-50 text-red-500 p-2 rounded-xl"
+        >
+          Remove from history
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /*
 useEffect(() => {
     const fetchData = async function () {
@@ -887,11 +985,14 @@ useEffect(() => {
 
       try {
         const [orderRes, bookingRes] = await Promise.all([
+          server.get("/api/orders/my-orders")
           server.get("/api/my-consultations"),
         ]);
 
+        setOrders(orderRes.data.orders || [])
         setConsultations(bookingRes.data.bookings || []);
       } catch (error) {
+       console.error("Fetch Error:", error)
         toast.error(
           error.response?.data?.message || "Error fetching activity data.",
         );
@@ -903,3 +1004,87 @@ useEffect(() => {
     fetchData();
   }, [isAuthenticated, user]);
 */
+
+// const fetchData = useCallback(
+//   async function () {
+//     if (!isAuthenticated || !user) return;
+//     setIsDataLoading(true);
+
+//     try {
+//       const response = await server.get("/api/my-consultations");
+//       setConsultations(response.data.bookings || []);
+//     } catch (error) {
+//       console.error("Fetch error:", error);
+//       // toast.error(
+//       //   error.response?.data?.message || "Error fetching activity data.",
+//       // );
+//     } finally {
+//       setIsDataLoading(false);
+//     }
+//   },
+//   [isAuthenticated, user],
+// );
+
+// Handle Account Deletion
+// const handleDelete = async function () {
+//   setIsDeleting(true);
+
+//   try {
+//     const response = await server.delete("/auth/delete-account");
+//     toast.success(response.data.message || "Account deleted successfully.");
+
+//     setItemToDelete(null);
+
+//     setTimeout(() => {
+//       window.location.href = "/login";
+//     }, 1500);
+//   } catch (error) {
+//     toast.error(error.response?.data?.message || "Failed to delete account.");
+//   } finally {
+//     setIsDeleting(false);
+//   }
+// };
+
+// ===== Handle User Delete History =====
+// ***** Consultation *****
+// const handleBookingDelete = async function () {
+//   // if (!confirm("Remove this activity from your profile?")) return;
+//   const id = itemToDelete.id;
+//   if (!id) return;
+
+//   setIsDeleting(true);
+//   try {
+//     await server.patch(`/api/my-consultations/${id}/hide`);
+//     toast.success("Removed from history.");
+
+//     setConsultations((prev) => prev.filter((item) => item._id !== id));
+//     setItemToDelete({ type: null, id: null });
+//   } catch (error) {
+//     toast.error(
+//       error.response?.data?.message || "Failed to remove activity.",
+//     );
+//   } finally {
+//     setIsDeleting(false);
+//   }
+// };
+
+// ***** Orders *****
+// const handleRemoveOrder = async function () {
+//   const id = itemToDelete.id;
+//   if (!id) return;
+
+//   setIsDeleting(true);
+//   try {
+//     await server.patch(`/api/orders/${id}/hide`);
+//     toast.success("Removed from history.");
+
+//     setOrders((prev) => prev.filter((item) => item._id !== id));
+//     setItemToDelete({ type: null, id: null });
+//   } catch (error) {
+//     toast.error(
+//       error.response?.data?.message || "Failed to remove activity.",
+//     );
+//   } finally {
+//     setIsDeleting(false);
+//   }
+// };
