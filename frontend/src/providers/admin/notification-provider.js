@@ -29,19 +29,24 @@ export function NotificationProvider({ children }) {
   // Function to refresh the counts from the Database
   const refreshAllCounts = useCallback(async () => {
     try {
-      const [bookingRes, messageRes] = await Promise.all([
+      const [bookingRes, messageRes, orderRes] = await Promise.all([
         server.get("/api/consultations"),
         server.get("/api/contact"),
+        server.get("/api/orders/admin/all"),
       ]);
 
       const newBookingCount =
         bookingRes.data?.bookings?.filter((b) => b.status === "pending")
           .length || 0;
+
       const newMessageCount =
         messageRes.data?.data?.filter((m) => m.status === "pending").length ||
         0;
 
-      const newTotal = newBookingCount + newMessageCount;
+      const newOrderCount =
+        orderRes.data?.data?.filter((o) => o.status === "paid").length || 0;
+
+      const newTotal = newBookingCount + newMessageCount + newOrderCount;
 
       // Only play sound if it's NOT the first load AND the count increased
       if (prevTotalRef.current !== null && newTotal > prevTotalRef.current) {
@@ -57,7 +62,7 @@ export function NotificationProvider({ children }) {
       const newCounts = {
         bookings: newBookingCount,
         messages: newMessageCount,
-        orders: 0,
+        orders: newOrderCount,
       };
 
       setCounts(newCounts);

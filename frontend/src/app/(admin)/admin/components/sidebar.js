@@ -109,7 +109,7 @@ export default function Sidebar() {
                           ${
                             expandSB
                               ? "left-3.5 top-1.5 " // Small dot next to icon when expanded
-                              : "left-5 top-2 " // Small dot on corner when collapsed
+                              : "left-5 top-1.5 " // Small dot on corner when collapsed
                           }`}
                         />
                       )}
