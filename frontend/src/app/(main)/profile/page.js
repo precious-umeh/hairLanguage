@@ -298,11 +298,21 @@ export default function ProfilePage() {
   ];
 
   // Redirect if not logged in
+  // useEffect(() => {
+  //   if (!loading && !isAuthenticated) {
+  //     router.replace("/login");
+  //   }
+  // }, [loading, isAuthenticated, router]);
+
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.replace("/login");
+    if (!loading) {
+      // Redirect if not logged or not user
+      if (!isAuthenticated || user?.role !== "user") {
+        router.replace("/login");
+        return;
+      }
     }
-  }, [loading, isAuthenticated, router]);
+  }, [loading, isAuthenticated, user, router]);
 
   if (loading) {
     return (
