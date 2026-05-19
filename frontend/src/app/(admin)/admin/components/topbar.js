@@ -120,10 +120,10 @@ export default function Topbar({ isOpen, toggleNav }) {
             <Bell size={22} className=" cursor-pointer" />
             {totalUnread > 0 && (
               <span
-                className="absolute top-1 right-1 w-4 h-4 bg-red-600 rounded-full border-2 
-                border-white flex items-center justify-center text-[8px] font-bold text-white"
+                className="absolute top-1 right-1.5 min-w-4.5 h-4.5 px-1 bg-red-600 rounded-full border-2 
+                border-white flex items-center justify-center text-[9px] font-bold text-white tabular-nums shadow-sm"
               >
-                {totalUnread}
+                {totalUnread > 99 ? "99+" : totalUnread}
               </span>
             )}
           </button>
