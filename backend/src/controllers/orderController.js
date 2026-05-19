@@ -1,6 +1,8 @@
 import Order from "../models/order.js";
 import Product from "../models/product.js";
 import mongoose from "mongoose";
+import { sendEmail } from "../utils/sendEmail.js";
+import { orderReceivedTemplate } from "../utils/emailTemplates.js";
 
 // CREATE ORDER
 export async function createOrder(req, res) {
@@ -66,6 +68,18 @@ export async function createOrder(req, res) {
 
     // Run stock subtraction
     await subtractStock(orderItems);
+
+    // Send Email
+    try {
+      await sendEmail({
+        to: userEmail,
+        subject: "Order Confirmation - Hair Language",
+        textContent: `Your order #${newOrder._id} has been received`,
+        htmlContent: orderReceivedTemplate(newOrder),
+      });
+    } catch (emailError) {
+      console.error("Email Failed:", emailError);
+    }
 
     res.status(201).json({
       success: true,
@@ -188,12 +202,14 @@ export async function getAllOrders(req, res) {
 // GET USER ORDER HISTORY (Logged In users only)
 export async function getUserOrders(req, res) {
   try {
-    const userId = req.user?.id;
+    const userId = req.user.id;
+    const userEmail = req.user.email;
 
     // Filter for soft delete
     const orders = await Order.find({
-      userId,
+      $or: [{ userId: userId }, { email: userEmail }],
       deletedByUser: { $ne: true },
+      deletedByAdmin: { $ne: true },
     }).sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -221,7 +237,11 @@ export async function guestOrderLookup(req, res) {
     }
 
     // Find the order that matches both ID and Email
-    const order = await Order.findOne({ _id: orderId, email: email });
+    const order = await Order.findOne({
+      _id: orderId,
+      email: email,
+      deletedByAdmin: { $ne: true },
+    });
 
     if (!order) {
       return res.status(404).json({

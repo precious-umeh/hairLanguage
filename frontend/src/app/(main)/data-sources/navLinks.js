@@ -4,6 +4,7 @@ const navLinks = [
   { name: "Our Story", path: "/pages/our-story" },
   { name: "Contact Us", path: "/pages/contact" },
   { name: "FAQ's", path: "/pages/faq" },
+  { name: "Track Order", path: "/pages/track-order" },
 ];
 
 export default navLinks;

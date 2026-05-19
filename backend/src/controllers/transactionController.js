@@ -1,6 +1,8 @@
 import Transaction from "../models/transaction.js";
 import axios from "axios";
 import Order from "../models/order.js";
+import { sendEmail } from "../utils/sendEmail.js";
+import { paymentSuccessTemplate } from "../utils/emailTemplates.js";
 
 const PAYSTACK_URL = "https://api.paystack.co/transaction";
 
@@ -89,10 +91,28 @@ export async function verifyPayment(req, res) {
       );
 
       // Update Order Status to "paid"
-      await Order.findByIdAndUpdate(transaction.orderId, {
-        status: "paid",
-        paymentReference: reference,
-      });
+      const updatedOrder = await Order.findByIdAndUpdate(
+        transaction.orderId,
+        {
+          status: "paid",
+          paymentReference: reference,
+        },
+        { returnDocument: "after" },
+      );
+
+      try {
+        await sendEmail({
+          to: transaction.email,
+          subject: "Payment Received! - Hair Language",
+          textContent: `Payment confirmed for order #${transaction.orderId}`,
+          htmlContent: paymentSuccessTemplate(
+            transaction.orderId,
+            updatedOrder.totalAmount,
+          ),
+        });
+      } catch (emailError) {
+        console.error("Payment Confirmation Email Failed:", emailError);
+      }
 
       return res.status(200).json({
         success: true,

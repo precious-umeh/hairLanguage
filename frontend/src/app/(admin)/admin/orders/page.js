@@ -16,6 +16,7 @@ import {
   User,
   Download,
   X,
+  PackageCheck,
 } from "lucide-react";
 import server from "@/app/(main)/utils/axiosClient";
 import { useNotifications } from "@/providers/admin/notification-provider";
@@ -133,16 +134,19 @@ export default function Orders() {
   const getStatusStyles = (status) => {
     switch (status) {
       case "paid":
-        return "bg-green-50 text-green-600";
+        return "bg-blue-50 text-blue-600";
 
       case "pending":
         return "bg-orange-50 text-orange-600";
 
       case "shipped":
-        return "bg-blue-50 text-blue-600";
+        return "bg-purple-50 text-purple-600";
 
       case "cancelled":
         return "bg-red-50 text-red-600";
+
+      case "delivered":
+        return "bg-green-50 text-green-600";
 
       default:
         return "bg-gray-50 text-gray-600";
@@ -412,7 +416,7 @@ export default function Orders() {
                         onClick={() =>
                           handleUpdateStatus(selectedOrder._id, "shipped")
                         }
-                        className="flex items-center justify-center gap-2 bg-blue-600 text-white p-3 rounded-xl text-xs font-bold hover:bg-blue-700 disabled:opacity-50"
+                        className="flex items-center justify-center gap-2 bg-purple-600 text-white p-3 rounded-xl text-xs font-bold hover:bg-purple-700 disabled:opacity-50"
                       >
                         <Truck size={16} /> Mark Shipped
                       </button>
@@ -421,23 +425,36 @@ export default function Orders() {
                         onClick={() =>
                           handleUpdateStatus(selectedOrder._id, "paid")
                         }
-                        className="flex items-center justify-center gap-2 bg-green-600 text-white p-3 rounded-xl text-xs font-bold hover:bg-green-700 disabled:opacity-50"
+                        className="flex items-center justify-center gap-2 bg-blue-600 text-white p-3 rounded-xl text-xs font-bold hover:bg-blue-700 disabled:opacity-50"
                       >
                         <CheckCircle2 size={16} /> Mark Paid
                       </button>
                     </div>
 
-                    <button
-                      disabled={
-                        isUpdating || selectedOrder.status === "cancelled"
-                      }
-                      onClick={() =>
-                        handleUpdateStatus(selectedOrder._id, "cancelled")
-                      }
-                      className="w-full flex items-center justify-center gap-2 bg-gray-600 text-white p-3 rounded-xl text-xs font-bold hover:bg-gray-700 disabled:opacity-50"
-                    >
-                      <XCircle size={16} /> Mark Cancelled
-                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        disabled={
+                          isUpdating || selectedOrder.status === "delivered"
+                        }
+                        onClick={() =>
+                          handleUpdateStatus(selectedOrder._id, "delivered")
+                        }
+                        className="flex items-center justify-center gap-2 bg-green-600 text-white p-3 rounded-xl text-xs font-bold hover:bg-green-700 disabled:opacity-50"
+                      >
+                        <PackageCheck size={16} /> Mark Delivered
+                      </button>
+                      <button
+                        disabled={
+                          isUpdating || selectedOrder.status === "cancelled"
+                        }
+                        onClick={() =>
+                          handleUpdateStatus(selectedOrder._id, "cancelled")
+                        }
+                        className="flex items-center justify-center gap-2 bg-gray-600 text-white p-3 rounded-xl text-xs font-bold hover:bg-gray-700 disabled:opacity-50"
+                      >
+                        <XCircle size={16} /> Mark Cancelled
+                      </button>
+                    </div>
 
                     <button
                       onClick={() => setItemToDelete(selectedOrder)}

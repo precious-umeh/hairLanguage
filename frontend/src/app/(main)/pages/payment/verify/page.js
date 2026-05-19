@@ -10,6 +10,7 @@ import {
   Loader2,
   ShoppingBag,
   Home,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -17,6 +18,7 @@ export default function VerifyPaymentPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState("verifying"); // verifying, success, error
+  const [isGuest, setIsGuest] = useState(true); //Default to guest
   const reference = searchParams.get("reference");
 
   useEffect(() => {
@@ -30,6 +32,10 @@ export default function VerifyPaymentPage() {
         const res = await server.get(`/api/transactions/verify/${reference}`);
 
         if (res.data.success) {
+          // Check if the transaction/order has a userId
+          const hasAccount = !!res.data.data.metadata?.userId;
+          setIsGuest(!hasAccount);
+
           setStatus("success");
           toast.success("Payment Successful!");
         }
@@ -80,11 +86,27 @@ export default function VerifyPaymentPage() {
           </p>
 
           <div className="flex flex-col gap-3">
-            <button
+            {/* <button
               onClick={() => router.push("/profile")}
               className="w-full bg-(--textColor) text-white py-4 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2"
             >
               <ShoppingBag size={18} /> View My Orders
+            </button> */}
+            <button
+              onClick={() =>
+                router.push(isGuest ? "/pages/track-order" : "/profile")
+              }
+              className="w-full bg-(--textColor) text-white py-4 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2"
+            >
+              {isGuest ? (
+                <>
+                  <Search size={18} /> Track My Order
+                </>
+              ) : (
+                <>
+                  <ShoppingBag size={18} /> View My Orders
+                </>
+              )}
             </button>
 
             <div className="grid grid-cols-2 gap-3">

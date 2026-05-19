@@ -281,3 +281,89 @@ export const otpTemplate = (name, otp, type = "registration") => {
     </div>
   `;
 };
+
+export const orderReceivedTemplate = (order) => {
+  const currentYear = new Date().getFullYear();
+  const itemsHtml = order.items
+    .map(
+      (item) => `
+    <tr>
+      <td style="padding: 10px 0; border-bottom: 1px solid #eee;">
+        <div style="font-weight: bold; color: #1a1a1a;">${item.productName}</div>
+        <div style="font-size: 12px; color: #666;">Qty: ${item.quantity} ${item.size ? `| Size: ${item.size}''` : ""}</div>
+      </td>
+      <td style="padding: 10px 0; border-bottom: 1px solid #eee; text-align: right; font-weight: bold; color: #1a1a1a;">
+        ₦${(item.price * item.quantity).toLocaleString()}
+      </td>
+    </tr>
+  `,
+    )
+    .join("");
+
+  return `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e6e6e6; border-radius: 8px; overflow: hidden; background-color: #ffffff;">
+      <div style="background-color: #1a1a1a; padding: 25px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; letter-spacing: 2px; font-size: 24px; text-transform: uppercase;">Hair Language</h1>
+      </div>
+      <div style="padding: 40px 30px;">
+        <h2 style="font-size: 20px; color: #1a1a1a; margin-top: 0; text-align: center;">Order Received!</h2>
+        <p style="text-align: center; color: #666;">Thank you for your order. We have received it and it's currently <strong>pending payment</strong>.</p>
+        
+        <div style="margin: 30px 0; padding: 20px; border: 1px dashed #ccc; background-color: #f9f9f9; text-align: center;">
+          <span style="display: block; font-size: 12px; color: #999; margin-bottom: 5px;">YOUR TRACKING ID</span>
+          <strong style="font-size: 18px; color: #1a1a1a; letter-spacing: 1px;">${order._id}</strong>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <thead>
+            <tr>
+              <th style="text-align: left; font-size: 12px; color: #999; border-bottom: 2px solid #1a1a1a; padding-bottom: 10px;">ITEM</th>
+              <th style="text-align: right; font-size: 12px; color: #999; border-bottom: 2px solid #1a1a1a; padding-bottom: 10px;">PRICE</th>
+            </tr>
+          </thead>
+          <tbody>${itemsHtml}</tbody>
+        </table>
+
+        <div style="text-align: right; margin-top: 20px;">
+          <p style="margin: 0; font-size: 14px; color: #666;">Total Amount</p>
+          <p style="margin: 0; font-size: 24px; font-weight: bold; color: #1a1a1a;">₦${order.totalAmount.toLocaleString()}</p>
+        </div>
+
+        <div style="margin-top: 40px; text-align: center;">
+          <a href="${process.env.FRONTEND_URL}/pages/track-order" style="background-color: #1a1a1a; color: #ffffff; padding: 15px 25px; text-decoration: none; font-weight: bold; border-radius: 4px; display: inline-block;">TRACK YOUR ORDER</a>
+        </div>
+      </div>
+      <div style="background-color: #f4f4f4; padding: 15px; text-align: center;">
+        <p style="font-size: 11px; color: #999; margin: 0;">&copy; ${currentYear} Hair Language Official Store</p>
+      </div>
+    </div>
+  `;
+};
+
+export const paymentSuccessTemplate = (orderId, amount) => {
+  return `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e6e6e6; border-radius: 8px; overflow: hidden; background-color: #ffffff;">
+      <div style="background-color: #2e2e2e; padding: 25px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; letter-spacing: 2px; font-size: 24px; text-transform: uppercase;">Hair Language</h1>
+      </div>
+      <div style="padding: 40px 30px; text-align: center;">
+        <div style="width: 80px; height: 80px; background-color: #f0fff4; border-radius: 50%; margin: 0 auto 20px auto; display: block;">
+          <img 
+            src="https://cdn-icons-png.flaticon.com/512/5610/5610944.png" 
+            alt="Success" 
+            style="width: 40px; height: 40px; margin-top: 20px;"
+          />
+        </div>
+
+        <h2 style="font-size: 22px; color: #1a1a1a; margin-top: 0;">Payment Confirmed</h2>
+        <p style="color: #666; line-height: 1.6;">We've successfully processed your payment of <strong>₦${amount.toLocaleString()}</strong> for Order <strong>#${orderId}</strong>.</p>
+        <p style="color: #666; margin-bottom: 30px;">Our team is now preparing your order for delivery!</p>
+        
+        <div style="border-top: 1px solid #eee; padding-top: 20px;">
+          <p style="font-size: 14px; color: #7a7a7a; margin: 0;">Stay beautiful,</p>
+          <p style="font-weight: bold; margin: 5px 0 0 0; color: #1a1a1a;">Franscisca</p>
+        </div>
+      </div>
+    </div>
+  `;
+};
