@@ -168,7 +168,7 @@ export async function createOrder(req, res) {
 // GET ALL ORDERS (Admin only)
 export async function getAllOrders(req, res) {
   try {
-    const orders = await Order.find()
+    const orders = await Order.find({ deletedByAdmin: { $ne: true } })
       .sort({ createdAt: -1 })
       .populate("userId", "name email");
 
