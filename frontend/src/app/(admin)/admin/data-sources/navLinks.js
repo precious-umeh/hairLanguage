@@ -9,6 +9,7 @@ import {
   Mail,
   Send,
   Settings,
+  CreditCard,
 } from "lucide-react";
 
 export const navLinks = [
@@ -24,6 +25,7 @@ export const navLinks = [
       { name: "Products", href: "/admin/products", icon: Package },
       { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
       { name: "Users", href: "/admin/customers", icon: Users },
+      { name: "Transactions", href: "/admin/transactions", icon: CreditCard },
     ],
   },
   {

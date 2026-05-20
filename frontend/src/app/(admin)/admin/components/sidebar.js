@@ -67,7 +67,7 @@ export default function Sidebar() {
         </div>
 
         {/* Nav Menu */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar text-sm">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide text-sm">
           {navLinks.map((group, i) => (
             <div key={i} className="mb-4">
               {expandSB && (
