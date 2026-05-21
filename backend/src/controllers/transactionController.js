@@ -136,7 +136,8 @@ export async function getAllTransactions(req, res) {
     const transactions = await Transaction.find()
       .populate("orderId", "totalAmount status items")
       .populate("userId", "productName email")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.status(200).json({
       success: true,
