@@ -158,10 +158,14 @@ export async function getAllTransactions(req, res) {
 export async function getUserTransactions(req, res) {
   try {
     const userId = req.user.id;
+    const userEmail = req.user.email;
 
-    const transactions = await Transaction.find({ userId })
-      .populate("orderId")
-      .sort({ createdAt: -1 });
+    const transactions = await Transaction.find({
+      $or: [{ userId: userId }, { email: userEmail }],
+    })
+      .populate("orderId", "status totalAmount")
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.status(200).json({
       success: true,
