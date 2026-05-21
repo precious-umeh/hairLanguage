@@ -23,8 +23,12 @@ import { useNotifications } from "@/providers/admin/notification-provider";
 import toast, { Toaster } from "react-hot-toast";
 import DeleteModal from "../components/deleteModal";
 import { formatPrice } from "@/app/(main)/utils/formatPrice";
+import { useSearchParams } from "next/navigation";
 
 export default function Orders() {
+  const searchParams = useSearchParams();
+  const targetOrderId = searchParams.get("search");
+
   // States
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -64,6 +68,21 @@ export default function Orders() {
   useEffect(() => {
     fetchOrders(true);
   }, [lastUpdated, fetchOrders]);
+
+  // Handle auto-selection from transaction redirection page
+  useEffect(() => {
+    if (targetOrderId && orders.length > 0) {
+      //Find order matching the ID in the URL string
+      const matchedOrder = orders.find(
+        (order) => String(order._id) === String(targetOrderId),
+      );
+
+      if (matchedOrder) {
+        setSelectedOrder(matchedOrder);
+        setActiveFilter("all");
+      }
+    }
+  }, [targetOrderId, orders]);
 
   // Update Status
   const handleUpdateStatus = async function (id, newStatus) {
@@ -125,7 +144,14 @@ export default function Orders() {
   };
 
   // Filter Orders
-  const filterTab = ["all", "pending", "paid", "shipped", "cancelled"];
+  const filterTab = [
+    "all",
+    "pending",
+    "paid",
+    "shipped",
+    "cancelled",
+    "delivered",
+  ];
 
   const filteredOrders = orders.filter((o) =>
     activeFilter === "all" ? true : o.status === activeFilter,
@@ -153,22 +179,15 @@ export default function Orders() {
     }
   };
 
-  // if (loading)
-  //   return (
-  //     <div className="h-96 flex items-center justify-center">
-  //       <Loader2 className="animate-spin text-(--accent)" size={40} />
-  //     </div>
-  //   );
-
   return (
     <main className="space-y-6">
       <Toaster position="top-left" />
 
       {/* HEADER SECTION */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between items-start mb-8 gap-4">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between items-start mb-8 gap-4">
         <div>
           <h1 className="text-sm font-bold text-(--textMuted) uppercase tracking-[0.2em]">
-            Product Orders
+            Order Management
           </h1>
           <p className="text-xs text-(--textMuted) font-medium">
             Manage wig sales and shipping status
@@ -225,7 +244,7 @@ export default function Orders() {
               : "-translate-y-full opacity-0 absolute"
           }`}
         >
-          <div className="flex gap-4 border-b border-(--lightSilver) mb-4">
+          <div className="flex gap-4 overflow-x-auto whitespace-nowrap border-b border-(--lightSilver) mb-4 scrollbar-hide">
             {filterTab.map((tab) => (
               <button
                 key={tab}
@@ -258,7 +277,7 @@ export default function Orders() {
                 className={`bg-white p-5 rounded-2xl border border-(--lightSilver) transition-all cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]`}
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
                       className={`p-3 rounded-full font-semibold ${getStatusStyles(order.status)}`}
                     >
@@ -281,22 +300,22 @@ export default function Orders() {
                         )}
                       </h3>
 
-                      <p className="text-[11px] text-(--textMuted)">
+                      <p className="text-[11px] text-(--textMuted) truncate max-w-35 sm:max-w-none">
                         {order.email}
                       </p>
                     </div>
                   </div>
 
                   <span
-                    className={`px-2 py-1 rounded-lg text-[9px] font-bold uppercase ${getStatusStyles(order.status)}`}
+                    className={`shrink-0 px-2 py-1 rounded-lg text-[9px] font-bold uppercase ${getStatusStyles(order.status)}`}
                   >
                     {order.status}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between gap-4 bg-(--softAsh) p-3 rounded-xl">
+                <div className="flex items-center justify-between gap-4 bg-(--softAsh) p-3 rounded-xl min-w-0">
                   <div className="">
-                    <p className="font-bold text-sm text-(--textColor)">
+                    <p className="font-bold text-sm text-(--textColor) wrap-break-word">
                       {formatPrice(order.totalAmount)}
                     </p>
                     <p className="text-[10px] uppercase text-(--textMuted) font-medium">
@@ -358,7 +377,7 @@ export default function Orders() {
                   </button>
                 </div>
 
-                <div className="p-8 space-y-6 flex-1 overflow-y-auto scrollbar-hide">
+                <div className="p-4 sm:p-8 space-y-6 flex-1 overflow-y-auto scrollbar-hide">
                   {/* ITEMS LIST */}
                   <div className="space-y-3">
                     <p className="text-xs font-bold uppercase text-(--textMuted)">
@@ -367,10 +386,12 @@ export default function Orders() {
                     {selectedOrder.items.map((item, i) => (
                       <div
                         key={i}
-                        className="flex justify-between items-center bg-gray-50 p-3 rounded-xl"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-gray-50 p-3 rounded-xl"
                       >
                         <div className="text-sm">
-                          <p className="font-bold">{item.productName}</p>
+                          <p className="font-bold line-clamp-2">
+                            {item.productName}
+                          </p>
                           <p className="text-xs text-(--textMuted)">
                             Size: {item.size}" | Qty: {item.quantity}
                           </p>
@@ -408,7 +429,7 @@ export default function Orders() {
                     <p className="text-xs font-bold uppercase text-(--textMuted)">
                       Update Status
                     </p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <button
                         disabled={
                           isUpdating || selectedOrder.status === "shipped"
@@ -431,7 +452,7 @@ export default function Orders() {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <button
                         disabled={
                           isUpdating || selectedOrder.status === "delivered"
