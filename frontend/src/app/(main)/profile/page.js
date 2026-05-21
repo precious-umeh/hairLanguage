@@ -3,6 +3,7 @@
 import { useAuth } from "@/providers/admin/auth-provider";
 import {
   Calendar,
+  CreditCard,
   Eye,
   EyeOff,
   Loader2,
@@ -26,6 +27,7 @@ export default function ProfilePage() {
 
   const [consultations, setConsultations] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [isDataLoading, setIsDataLoading] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -202,7 +204,7 @@ export default function ProfilePage() {
   };
 
   // =======================================
-  // Fetch and Sync Orders and Consultations of the User
+  // Fetch and Sync Orders, Consultations and Transactions of the User
 
   const fetchData = useCallback(
     async function () {
@@ -210,13 +212,15 @@ export default function ProfilePage() {
       setIsDataLoading(true);
 
       try {
-        const [orderRes, bookingRes] = await Promise.all([
+        const [orderRes, bookingRes, transactionRes] = await Promise.all([
           server.get("/api/orders/my-orders"),
           server.get("/api/my-consultations"),
+          server.get("/api/transactions/my-history"),
         ]);
 
         setOrders(orderRes.data.data || []);
         setConsultations(bookingRes.data.bookings || []);
+        setTransactions(transactionRes.data.data || []);
       } catch (error) {
         console.error("Fetch Error:", error);
         toast.error(
@@ -293,6 +297,11 @@ export default function ProfilePage() {
       id: "consultations",
       label: "Consultations",
       icon: <Calendar size={18} />,
+    },
+    {
+      id: "transactions",
+      label: "Transactions",
+      icon: <CreditCard size={18} />,
     },
     { id: "security", label: "Security", icon: <Settings size={18} /> },
   ];
@@ -602,6 +611,31 @@ export default function ProfilePage() {
                 desc="Book a session with our experts to see them here."
                 btnText="Book a Consultation"
                 onAction={() => router.push("/pages/consultation")}
+              />
+            )}
+          </div>
+        )}
+
+        {activeTab === "transactions" && (
+          <div className="fade-up">
+            {isDataLoading ? (
+              <div className="flex flex-col items-center py-20 text-(--textMuted)">
+                <Loader2 size={32} className="animate-spin mb-2" />
+                <p className="text-sm">Fetching your transactions...</p>
+              </div>
+            ) : transactions.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4">
+                {transactions.map((trx) => (
+                  <TransactionCard key={trx._id} transaction={trx} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={<CreditCard size={48} />}
+                title="No available transactions"
+                desc="Your purchase history will appear here"
+                btnText="Shop"
+                onAction={() => router.push("/shop")}
               />
             )}
           </div>
@@ -984,6 +1018,100 @@ function OrderCard({ order, onRemove }) {
         >
           Remove from history
         </button>
+      </div>
+    </div>
+  );
+}
+
+function TransactionCard({ transaction }) {
+  const getStatusStyles = (status) => {
+    switch (status) {
+      case "success":
+        return "bg-green-100 text-green-700";
+      case "pending":
+        return "bg-orange-100 text-orange-700";
+      case "failed":
+        return "bg-red-100 text-red-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-3xl border border-(--coolGrey) hover:shadow-md transition space-y-4">
+      {/* TOP */}
+      <div className="flex justify-between items-start gap-4">
+        <div className="min-w-0">
+          <p className="text-xs text-(--textMuted) uppercase tracking-wider">
+            Transaction Reference
+          </p>
+
+          <p className="font-bold text-sm break-all">{transaction.reference}</p>
+        </div>
+
+        <span
+          className={`text-[10px] uppercase font-bold px-3 py-1 rounded-full shrink-0 ${getStatusStyles(
+            transaction.status,
+          )}`}
+        >
+          {transaction.status}
+        </span>
+      </div>
+
+      {/* DETAILS */}
+      <div className="border-t border-b border-(--softAsh) py-4 space-y-3">
+        <div className="flex justify-between items-center gap-3">
+          <span className="text-sm text-(--textMuted)">Amount</span>
+
+          <span className="font-black text-(--accent)">
+            {formatPrice(transaction.amount)}
+          </span>
+        </div>
+
+        <div className="flex justify-between items-center gap-3">
+          <span className="text-sm text-(--textMuted)">Payment Channel</span>
+
+          <span className="text-sm font-medium capitalize">
+            {transaction.channel || "Not Available"}
+          </span>
+        </div>
+
+        <div className="flex justify-between items-center gap-3">
+          <span className="text-sm text-(--textMuted)">Order Status</span>
+
+          <span className="text-sm font-medium capitalize">
+            {transaction.orderId?.status || "Unknown"}
+          </span>
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <div className="flex justify-between items-center gap-4 flex-wrap">
+        <div>
+          <p className="text-xs text-(--textMuted)">Transaction Date</p>
+
+          <p className="text-sm font-medium">
+            {new Date(
+              transaction.paidAt || transaction.createdAt,
+            ).toLocaleDateString("en-NG", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </p>
+        </div>
+
+        {transaction.orderId && (
+          <div className="bg-(--softAsh) px-3 py-2 rounded-xl">
+            <p className="text-[10px] uppercase text-(--textMuted)">
+              Order Ref
+            </p>
+
+            <p className="font-bold text-xs">
+              #{transaction.orderId._id.slice(-8).toUpperCase()}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
