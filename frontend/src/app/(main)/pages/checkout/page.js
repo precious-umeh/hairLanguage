@@ -36,11 +36,23 @@ export default function CheckoutPage() {
     setFormData({ ...formData, [name]: value });
   };
 
-  // Calculate local total based only on checkoutItems
-  const localTotal = checkoutItems.reduce(
+  // Calculate subtotal based only on checkoutItems raw prices
+  const subtotal = checkoutItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0,
   );
+
+  // Calculate Tax Fee
+  const taxFee = Math.round(subtotal * 0.075);
+
+  // Delivery Fee
+  const deliveryFee =
+    checkoutItems.length > 0 && formData.state.trim().toLowerCase() === "lagos"
+      ? 4000
+      : 8000;
+
+  // Grand Total
+  const grandTotal = subtotal + taxFee + deliveryFee;
 
   // Remove items locally
   const removeItemsLocally = (index) => {
@@ -182,7 +194,7 @@ export default function CheckoutPage() {
             disabled={loading || checkoutItems.length === 0}
             className="w-full bg-(--accent) text-white py-4 rounded-lg font-bold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Processing..." : `Pay ${formatPrice(localTotal)}`}
+            {loading ? "Processing..." : `Pay ${formatPrice(grandTotal)}`}
           </button>
         </form>
 
@@ -195,7 +207,6 @@ export default function CheckoutPage() {
           {checkoutItems.length > 0 ? (
             <>
               <div className="space-y-4 max-h-100 overflow-y-auto pr-2">
-                {/* {cartData.items.map((item, i) => ( */}
                 {checkoutItems.map((item, i) => (
                   <div
                     key={i}
@@ -232,10 +243,34 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
+              {/* Subtotal, VAT, DeliveryFee */}
+              <div className="mt-6 pt-4 border-t border-gray-100 space-y-2.5 text-xs font-semibold text-(--textMuted)">
+                <div className="flex justify-between">
+                  <span>Items Subtotal</span>
+                  <span className="text-(--textColor)">
+                    {formatPrice(subtotal)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Value Added Tax (7.5% VAT)</span>
+                  <span className="text-(--textColor)">
+                    {formatPrice(taxFee)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Delivery Fee</span>
+                  <span className="text-(--textColor)">
+                    {formatPrice(deliveryFee)}
+                  </span>
+                </div>
+              </div>
+
               <div className="mt-6 pt-4 border-t-2 border-dashed border-(--softAsh) flex justify-between items-center">
                 <span className="text-lg">Total Amount</span>
                 <span className="text-2xl font-black text-(--accent)">
-                  {formatPrice(localTotal)}
+                  {formatPrice(grandTotal)}
                 </span>
               </div>
             </>
