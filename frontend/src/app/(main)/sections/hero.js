@@ -70,7 +70,7 @@ export default function HeroSection() {
             className="bg-(--softAsh) px-4 py-2 rounded-lg text-(--text-color) font-medium capitalize cursor-pointer 
             scale-95 hover:scale-100 transition-transform duration-200"
           >
-            <a href="/">Shop the collection</a>
+            <a href="/shop">Shop the collection</a>
           </motion.button>
         </motion.div>
       </div>
