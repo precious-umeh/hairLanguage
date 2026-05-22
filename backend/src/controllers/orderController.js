@@ -18,7 +18,7 @@ export async function createOrder(req, res) {
         .json({ message: "Email is required for checkout." });
     }
 
-    let totalAmount = 0;
+    let subtotal = 0;
     const orderItems = [];
 
     // The loop starts here - 'item' is defined ONLY inside these curly braces
@@ -40,7 +40,7 @@ export async function createOrder(req, res) {
         if (variation) itemPrice = variation.price;
       }
 
-      totalAmount += itemPrice * item.quantity;
+      subtotal += itemPrice * item.quantity;
 
       orderItems.push({
         productId: item.productId,
@@ -57,10 +57,22 @@ export async function createOrder(req, res) {
     }
     // The loop ends here. If you use 'item' below this line, it will crash.
 
+    // Financial Computations
+    const taxRate = 0.075; // 7.5% VAT
+    const taxFee = Math.round(subtotal * taxRate);
+
+    const deliveryFee =
+      shippingAddress.state.toLowerCase() === "lagos" ? 4000 : 8000;
+
+    const totalAmount = subtotal + taxFee + deliveryFee;
+
     const newOrder = await Order.create({
       userId,
       email: userEmail,
       items: orderItems,
+      subtotal,
+      taxFee,
+      deliveryFee,
       totalAmount,
       shippingAddress,
       status: "pending",
@@ -84,6 +96,9 @@ export async function createOrder(req, res) {
     res.status(201).json({
       success: true,
       orderId: newOrder._id,
+      subtotal: newOrder.subtotal,
+      taxFee: newOrder.taxFee,
+      deliveryFee: newOrder.deliveryFee,
       totalAmount: newOrder.totalAmount,
       message: "Order created successfully.",
     });
