@@ -22,7 +22,7 @@ export default function ReturnsPolicy() {
       className={`bg-white ${inter.className} text-(--textColor) min-h-screen py-16 px-[5vw] max-w-5xl mx-auto`}
     >
       {/* Header Summary Section */}
-      <section className="text-center space-y-4 mb-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <section className="text-center space-y-4 mb-16 animate-zoom-in">
         <span className="text-[11px] font-black uppercase tracking-widest bg-gray-100 text-gray-800 px-3 py-1 rounded-full">
           Customer Care Registry
         </span>
