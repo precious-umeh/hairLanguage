@@ -29,7 +29,7 @@ export default function Collections() {
         ))}
       </div>
       <Link
-        href="/"
+        href="/shop"
         className="inline-block hover:underline underline-offset-4 decoration-2 tracking-wide cursor-pointer"
       >
         View all &rarr;
