@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -11,22 +9,27 @@ import {
   AreaChart,
   Area,
 } from "recharts";
+import { formatPrice } from "@/app/(main)/utils/formatPrice";
 
-const data = [
-  { name: "Mon", sales: 400000 },
-  { name: "Tue", sales: 300000 },
-  { name: "Wed", sales: 500000 },
-  { name: "Thu", sales: 278000 },
-  { name: "Fri", sales: 189000 },
-  { name: "Sat", sales: 639000 },
-  { name: "Sun", sales: 349000 },
-];
+// Pass chartData as a reactive prop from your master parent dashboard layout container
+export default function SalesChart({ chartData = [] }) {
+  // Clean fallback in case the store database has zero orders in the week interval
+  const defaultEmptyFallback = [
+    { name: "Mon", sales: 0 },
+    { name: "Tue", sales: 0 },
+    { name: "Wed", sales: 0 },
+    { name: "Thu", sales: 0 },
+    { name: "Fri", sales: 0 },
+    { name: "Sat", sales: 0 },
+    { name: "Sun", sales: 0 },
+  ];
 
-export default function SalesChart() {
+  const activeData = chartData.length > 0 ? chartData : defaultEmptyFallback;
+
   return (
     <div className="h-75 w-full mt-4">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data}>
+        <AreaChart data={activeData}>
           <defs>
             <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#1f1f1f" stopOpacity={0.1} />
@@ -49,12 +52,19 @@ export default function SalesChart() {
             axisLine={false}
             tickLine={false}
             tick={{ fill: "#6b6b6b", fontSize: 12 }}
+            // Format the Y-Axis tick markers clean into currency metrics (e.g. 50k instead of 50000)
+            tickFormatter={(value) =>
+              value >= 1000 ? `₦${(value / 1000).toFixed(0)}k` : `₦${value}`
+            }
           />
           <Tooltip
+            formatter={(value) => [formatPrice(value), "Gross Revenue"]}
             contentStyle={{
               borderRadius: "12px",
               border: "none",
               boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+              fontFamily: "inherit",
+              fontSize: "12px",
             }}
           />
           <Area
