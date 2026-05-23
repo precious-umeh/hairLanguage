@@ -11,7 +11,8 @@ import { useCallback, useEffect, useState } from "react";
 export default function Dashboard() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { lastUpdated, setCounts } = useNotifications();
+  const [chartData, setChartData] = useState([]);
+  const { lastUpdated, setCounts, counts } = useNotifications();
 
   const fetchRecentBookings = useCallback(
     async function (isSilent = false) {
@@ -53,6 +54,21 @@ export default function Dashboard() {
     }
   }, [fetchRecentBookings, lastUpdated, loading]);
 
+  useEffect(() => {
+    async function loadDashboardMetrics() {
+      try {
+        const res = await server.get("api/admin/dashboard-stats");
+
+        if (res.data.success) {
+          setChartData(res.data.data.salesChartData);
+        }
+      } catch (error) {
+        console.error("Dashboard engine synchronization anomaly:", error);
+      }
+    }
+    loadDashboardMetrics();
+  }, [counts?.orders]); // Triggers automatic graph recalculations whenever background sync registers a paid order!
+
   return (
     <main className="space-y-10">
       {/* Stats Grid */}
@@ -74,7 +90,7 @@ export default function Dashboard() {
           </div>
 
           <div className="flex-1 border-2 border-dashed border-(--softAsh) rounded-xl mt-4 p-2">
-            <SalesChart />
+            <SalesChart chartData={chartData} />
           </div>
         </div>
 
