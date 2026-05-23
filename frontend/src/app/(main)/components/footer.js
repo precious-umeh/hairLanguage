@@ -295,6 +295,16 @@ export default function Footer() {
                 className="w-5 h-5 object-contain"
               />
             </Link>
+            <Link
+              href="#"
+              className="opacity-60 hover:opacity-100 transition-opacity"
+            >
+              <img
+                src="/icons/icons8-tiktok-logo-90.png"
+                alt="TikTok"
+                className="w-5 h-5 object-contain"
+              />
+            </Link>
           </div>
         </div>
       </div>
