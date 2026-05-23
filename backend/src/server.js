@@ -10,6 +10,7 @@ import colorRoutes from "./routes/colorRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 const server = express();
 server.use(express.json());
@@ -24,6 +25,7 @@ server.use("/api", colorRoutes);
 server.use("/api/cart", cartRoutes);
 server.use("/api/orders", orderRoutes);
 server.use("/api/transactions", transactionRoutes);
+server.use("/api/admin", adminRoutes);
 
 connectDB();
 
