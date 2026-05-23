@@ -198,6 +198,14 @@ export default function Footer() {
                   Exhange Policies
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/pages/consultation"
+                  className="hover:text-(--textColor) transition-colors"
+                >
+                  Book a Consultation
+                </Link>
+              </li>
             </ul>
 
             {/* <p className="w-[85%]">
