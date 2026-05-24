@@ -11,6 +11,7 @@ import cartRoutes from "./routes/cartRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import adminSettingsRoutes from "./routes/adminSettingsRoutes.js";
 
 const server = express();
 server.use(express.json());
@@ -26,6 +27,7 @@ server.use("/api/cart", cartRoutes);
 server.use("/api/orders", orderRoutes);
 server.use("/api/transactions", transactionRoutes);
 server.use("/api/admin", adminRoutes);
+server.use("api/admin", adminSettingsRoutes);
 
 connectDB();
 
