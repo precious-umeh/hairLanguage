@@ -3,6 +3,7 @@ import axios from "axios";
 import Order from "../models/order.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { paymentSuccessTemplate } from "../utils/emailTemplates.js";
+import AdminSettings from "../models/adminSettings.js";
 
 const PAYSTACK_URL = "https://api.paystack.co/transaction";
 
@@ -100,6 +101,31 @@ export async function verifyPayment(req, res) {
         { returnDocument: "after" },
       );
 
+      // Admin Notification Preference
+      const systemConfig = await AdminSettings.findOne();
+      const allowPayoutAlerts = systemConfig
+        ? systemConfig.notifications.payoutConfirmations
+        : true;
+
+      // Send Admin EMail
+      if (allowPayoutAlerts) {
+        try {
+          await sendEmail({
+            to: process.env.EMAIL_USER,
+            subject: "Payment Confirmation Received",
+            textContent: `Payment reference: ${reference} verified successfully.`,
+            htmlContent: paymentSuccessTemplate(
+              transaction.orderId,
+              updatedOrder.totalAmount,
+              true,
+            ),
+          });
+        } catch (emailErr) {
+          console.error("Admin Transaction Alert Failed:", emailErr);
+        }
+      }
+
+      // Send User Email
       try {
         await sendEmail({
           to: transaction.email,
