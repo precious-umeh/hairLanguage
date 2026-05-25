@@ -7,9 +7,13 @@ import jwt from "jsonwebtoken";
 import validator from "validator";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
-import { otpTemplate } from "../utils/emailTemplates.js";
+import {
+  adminNewSignupTemplate,
+  otpTemplate,
+} from "../utils/emailTemplates.js";
 import Consultation from "../models/consultation.js";
 import Cart from "../models/cart.js";
+import AdminSettings from "../models/adminSettings.js";
 
 dotenv.config();
 
@@ -172,6 +176,25 @@ export async function verifyOtp(req, res) {
 
     await verifiedUser.save();
     await PendingUser.deleteOne({ email: emailNormalized });
+
+    // Admin Notification Preference
+    try {
+      const systemConfig = await AdminSettings.findOne();
+      const allowSignupAlerts = systemConfig
+        ? systemConfig.notifications.newCustomerSignup
+        : false;
+
+      if (allowSignupAlerts) {
+        await sendEmail({
+          to: process.env.USER_EMAIL,
+          subject: "New Client Registration - Hair Language",
+          textContent: `${verifiedUser.name} (${verifiedUser.email}) has successfully verified their account.`,
+          htmlContent: adminNewSignupTemplate(verifiedUser),
+        });
+      }
+    } catch (configErr) {
+      console.error("Admin registration alert failed safely:", configErr);
+    }
 
     const token = signToken({
       sub: verifiedUser._id,
