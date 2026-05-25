@@ -10,7 +10,7 @@ const adminSettingsSchema = new mongoose.Schema(
     },
     notifications: {
       newOrderAlerts: { type: Boolean, default: true },
-      orderCancellations: { type: Boolean, default: true },
+      // orderCancellations: { type: Boolean, default: true },
       lowStockWarning: { type: Boolean, default: true },
       outOfStock: { type: Boolean, default: false },
       newCustomerSignup: { type: Boolean, default: false },
