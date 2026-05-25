@@ -2,7 +2,10 @@ import Order from "../models/order.js";
 import Product from "../models/product.js";
 import mongoose from "mongoose";
 import { sendEmail } from "../utils/sendEmail.js";
-import { orderReceivedTemplate } from "../utils/emailTemplates.js";
+import {
+  adminInventoryAlertTemplate,
+  orderReceivedTemplate,
+} from "../utils/emailTemplates.js";
 import AdminSettings from "../models/adminSettings.js";
 
 // CREATE ORDER
@@ -359,22 +362,123 @@ async function revertStock(items) {
 
 // STOCK SUBTRACTION HELPER FUNCTION
 async function subtractStock(items) {
+  // Fetch admin preferences once before the loop to keep database queries efficient
+  const systemConfig = await AdminSettings.findOne();
+  const allowLowStock = systemConfig
+    ? systemConfig.notifications.lowStockWarning
+    : true;
+  const allowOutOfStock = systemConfig
+    ? systemConfig.notifications.outOfStock
+    : false;
+
   const promises = items.map(async (item) => {
-    const product = await Product.findById(item.productId);
-    if (!product) return;
+    let updatedProduct;
 
     if (item.size) {
-      // Subtract stock for a specific length/size
-      await Product.updateOne(
+      // Subtract stock for a specific length/size and return the updaated document
+      updatedProduct = await Product.findOneAndUpdate(
         { _id: item.productId, "lengths.size": item.size },
         { $inc: { "lengths.$.inventory": -Math.abs(item.quantity) } },
+        { returnDocument: "after" },
       );
+
+      if (!updatedProduct) return;
+
+      // Find the specific length array element we just modified to check its new inventory value
+      const variation = updatedProduct.lengths.find(
+        (l) => Number(l.size) === Number(item.size),
+      );
+
+      if (variation) {
+        const currentInventory = variation.inventory;
+
+        // Evaluate Variant Stock Levels
+        try {
+          if (currentInventory === 0 && allowOutOfStock) {
+            await sendEmail({
+              to: process.env.EMAIL_USER,
+              subject: `🚨 Out of Stock: ${updatedProduct.name} (${item.size}")`,
+              textContent: `The variant size (${item.size})" for ${updatedProduct.name} is completely sold out!`,
+              htmlContent: adminInventoryAlertTemplate(
+                updatedProduct.name,
+                item.size,
+                0,
+                "outOfStock",
+              ),
+            });
+          } else if (
+            currentInventory > 0 &&
+            currentInventory <= 5 &&
+            allowLowStock
+          ) {
+            await sendEmail({
+              to: process.env.EMAIL_USER,
+              subject: `⚠ Low Stock Warning: ${updatedProduct.name} (${item.size}")`,
+              textContent: `Low stock alert! Only ${currentInventory} units left for ${updatedProduct.name} - size ${item.size}".`,
+              htmlContent: adminInventoryAlertTemplate(
+                updatedProduct.name,
+                item.size,
+                currentInventory,
+                "lowStockWarning",
+              ),
+            });
+          }
+        } catch (emailError) {
+          console.error(
+            "Variant inventory email notification failed safely:",
+            emailError,
+          );
+        }
+      }
     } else {
-      // Subtract global stock
-      await Product.updateOne(
+      // Subtract global stock and return the updated document
+      updatedProduct = await Product.findOneAndUpdate(
         { _id: item.productId },
         { $inc: { inventory: -Math.abs(item.quantity) } },
+        { new: true },
       );
+
+      if (!updatedProduct || updatedProduct.inventory === undefined) return;
+
+      const currentInventory = updatedProduct.inventory;
+
+      // Evaluate Global Stock Levels
+      try {
+        if (currentInventory === 0 && allowOutOfStock) {
+          await sendEmail({
+            to: process.env.EMAIL_USER,
+            subject: `🚨 Out of Stock: ${updatedProduct.name}`,
+            textContent: `${updatedProduct.name} is completely sold out!`,
+            htmlContent: adminInventoryAlertTemplate(
+              updatedProduct.name,
+              null,
+              0,
+              "outOfStock",
+            ),
+          });
+        } else if (
+          currentInventory > 0 &&
+          currentInventory <= 5 &&
+          allowLowStock
+        ) {
+          await sendEmail({
+            to: process.env.EMAIL_USER,
+            subject: `⚠️ Low Stock Warning: ${updatedProduct.name}`,
+            textContent: `Low stock alert! Only ${currentInventory} units left for ${updatedProduct.name}.`,
+            htmlContent: adminInventoryAlertTemplate(
+              updatedProduct.name,
+              null,
+              currentInventory,
+              "lowStockWarning",
+            ),
+          });
+        }
+      } catch (emailError) {
+        console.error(
+          "Global inventory email notification failed safely:",
+          emailError,
+        );
+      }
     }
   });
 
