@@ -5,6 +5,7 @@ import {
   Globe,
   Info,
   Link2,
+  Loader2,
   Mail,
   MapPin,
   Phone,
@@ -25,6 +26,9 @@ export default function SettingsPage() {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const [loading, setLoading] = useState(false);
+  const [updating, setUpdating] = useState(false);
+
   const [sessions, setSessions] = useState([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
   const { currentSessionId, user, setAuthData } = useAuth();
@@ -36,6 +40,13 @@ export default function SettingsPage() {
 
   const router = useRouter();
 
+  const [preferences, setPreferences] = useState({
+    newOrderAlerts: true,
+    lowStockWarning: true,
+    outOfStock: false,
+    newCustomerSignup: false,
+    payoutConfirmations: true,
+  });
   const [activeTab, setActiveTab] = useState("general");
   const navTabs = [
     {
@@ -54,6 +65,54 @@ export default function SettingsPage() {
       icon: <ShieldCheck size={18} />,
     },
   ];
+
+  // Pull existing selections on component wake sequence
+  useEffect(() => {
+    async function fetchPreferences() {
+      setLoading(true);
+
+      try {
+        const res = await server.get("/api/admin/settings/notifications/get");
+
+        if (res.data.success) {
+          setPreferences(res.data.data);
+        }
+      } catch (error) {
+        console.error("Failed loading admin notification registries:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPreferences();
+  }, []);
+
+  // Update specific toggles dynamically
+  const handleToggleChange = (key, value) => {
+    setPreferences((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  // Push updated settings back to database
+  const savePreferences = async () => {
+    setUpdating(true);
+
+    try {
+      const res = await server.patch(
+        "/api/admin/settings/notifications/update",
+        preferences,
+      );
+
+      if (res.data.success) {
+        toast.success("Preferences saved successfully.");
+      }
+    } catch (error) {
+      toast.error("Failed to update notifications control.");
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   // Handle Fetch Sessions
   const fetchSessions = async function () {
@@ -176,6 +235,14 @@ export default function SettingsPage() {
       setIsDeleting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-75">
+        <Loader2 className="animate-spin text-(--textMuted)" size={24} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10">
@@ -442,13 +509,16 @@ export default function SettingsPage() {
                     <NotificationToggle
                       title="New Order Alerts"
                       description="Get notified immediately when a customer places an order."
-                      defaultChecked={true}
+                      checked={preferences.newOrderAlerts}
+                      onChange={(val) =>
+                        handleToggleChange("newOrderAlerts", val)
+                      }
                     />
-                    <NotificationToggle
+                    {/* <NotificationToggle
                       title="Order Cancellations"
                       description="Receive alerts if a customer requests a cancellation."
                       defaultChecked={true}
-                    />
+                    /> */}
                   </div>
                 </div>
 
@@ -463,12 +533,16 @@ export default function SettingsPage() {
                     <NotificationToggle
                       title="Low Stock Warning"
                       description="Alert me when a product variant drops below 5 units."
-                      defaultChecked={true}
+                      checked={preferences.lowStockWarning}
+                      onChange={(val) =>
+                        handleToggleChange("lowStockWarning", val)
+                      }
                     />
                     <NotificationToggle
                       title="Out of Stock"
                       description="Notify me when a product is completely sold out."
-                      defaultChecked={false}
+                      checked={preferences.outOfStock}
+                      onChange={(val) => handleToggleChange("outOfStock", val)}
                     />
                   </div>
                 </div>
@@ -484,12 +558,18 @@ export default function SettingsPage() {
                     <NotificationToggle
                       title="New Customer Signup"
                       description="Receive an alert when someone creates a new account."
-                      defaultChecked={false}
+                      checked={preferences.newCustomerSignup}
+                      onChange={(val) =>
+                        handleToggleChange("newCustomerSignup", val)
+                      }
                     />
                     <NotificationToggle
                       title="Payout Confirmations"
                       description="Get notified when a payment is successfully processed to your bank."
-                      defaultChecked={true}
+                      checked={preferences.payoutConfirmations}
+                      onChange={(val) =>
+                        handleToggleChange("payoutConfirmations", val)
+                      }
                     />
                   </div>
                 </div>
@@ -497,8 +577,13 @@ export default function SettingsPage() {
 
               {/* Button - Full width on mobile, auto width on desktop */}
               <div className="flex justify-end pt-8">
-                <button className="w-full md:w-auto px-8 py-4 md:py-3 bg-(--accent) text-white rounded-2xl font-bold shadow-md hover:opacity-90 transition active:scale-[0.98]">
-                  Update Preferences
+                <button
+                  onClick={savePreferences}
+                  disabled={updating}
+                  className="w-full md:w-auto px-8 py-4 md:py-3 bg-(--accent) text-white rounded-2xl font-bold shadow-md hover:opacity-90 transition active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {updating && <Loader2 className="animate-spin" size={16} />}
+                  {updating ? "Saving..." : "Update Preferences"}
                 </button>
               </div>
             </section>
@@ -767,7 +852,7 @@ export default function SettingsPage() {
   );
 }
 
-function NotificationToggle({ title, description, defaultChecked }) {
+function NotificationToggle({ title, description, checked, onChange }) {
   return (
     <div className="flex items-center justify-between gap-6 group">
       <div className="flex-1">
@@ -781,7 +866,8 @@ function NotificationToggle({ title, description, defaultChecked }) {
         <input
           type="checkbox"
           className="sr-only peer"
-          defaultChecked={defaultChecked}
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
         />
         <div
           className="w-11 h-6 bg-(--coolGrey) peer-focus:outline-none rounded-full peer 
