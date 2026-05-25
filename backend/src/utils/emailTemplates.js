@@ -430,3 +430,107 @@ export const paymentSuccessTemplate = (orderId, amount, isAdmin = false) => {
     </div>
   `;
 };
+
+export const adminNewSignupTemplate = (user) => {
+  const currentYear = new Date().getFullYear();
+
+  return `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e6e6e6; border-radius: 8px; overflow: hidden; background-color: #ffffff;">
+      <div style="background-color: #1a1a1a; padding: 25px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; letter-spacing: 2px; font-size: 24px; text-transform: uppercase;">Hair Language</h1>
+      </div>
+      <div style="padding: 40px 30px;">
+        <h2 style="font-size: 20px; color: #1a1a1a; margin-top: 0; text-align: center;">New Patron Registered!</h2>
+        <p style="text-align: center; color: #666; line-height: 1.6;">A customer has successfully verified their identity via OTP and established an active account profile on your store platform.</p>
+        
+        <div style="margin: 30px 0; padding: 20px; border: 1px solid #eee; background-color: #f9f9f9; border-radius: 6px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 6px 0; font-size: 14px; color: #666; width: 30%;"><strong>Full Name:</strong></td>
+              <td style="padding: 6px 0; font-size: 14px; color: #1a1a1a;">${user.name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; font-size: 14px; color: #666;"><strong>Email Address:</strong></td>
+              <td style="padding: 6px 0; font-size: 14px; color: #1a1a1a; font-weight: 500;">${user.email}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; font-size: 14px; color: #666;"><strong>Account Status:</strong></td>
+              <td style="padding: 6px 0; font-size: 13px; color: #2f855a; font-weight: bold; text-transform: uppercase;">Verified ✓</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="margin-top: 35px; text-align: center;">
+          <a href="${process.env.FRONTEND_URL}/admin" style="background-color: #1a1a1a; color: #ffffff; padding: 14px 24px; text-decoration: none; font-weight: bold; border-radius: 4px; display: inline-block; font-size: 14px;">OPEN MANAGEMENT CORE</a>
+        </div>
+        
+        <p style="font-size: 11px; color: #999; margin-top: 35px; text-align: center; line-height: 1.4;">
+          This is an automated administrative system alert.<br/>
+          You can toggle or refine customer signup notification streams inside your admin settings dashboard workspace panel.
+        </p>
+      </div>
+      <div style="background-color: #f4f4f4; padding: 15px; text-align: center;">
+        <p style="font-size: 11px; color: #999; margin: 0;">&copy; ${currentYear} Hair Language Official Store</p>
+      </div>
+    </div>
+  `;
+};
+
+export const adminInventoryAlertTemplate = (
+  productName,
+  size,
+  remainingStock,
+  type,
+) => {
+  const currentYear = new Date().getFullYear();
+  const isOutOfStock = type === "outOfStock";
+
+  const alertTitle = isOutOfStock
+    ? "🚨 Out of Stock Alert"
+    : "⚠️ Low Stock Warning";
+  const badgeColor = isOutOfStock ? "#dc2626" : "#d97706";
+  const statusText = isOutOfStock
+    ? "Completely Sold Out (0 units left)"
+    : `Only ${remainingStock} unit(s) remaining!`;
+  const actionMessage = isOutOfStock
+    ? "This variant has been completely depleted. Customers can no longer purchase this specific size until inventory is replenished."
+    : "This variant has dropped below your safety threshold. Consider restocking soon to avoid stockouts.";
+
+  return `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e6e6e6; border-radius: 8px; overflow: hidden; background-color: #ffffff;">
+      <div style="background-color: #1a1a1a; padding: 25px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; letter-spacing: 2px; font-size: 24px; text-transform: uppercase;">Hair Language</h1>
+      </div>
+      <div style="padding: 40px 30px;">
+        <h2 style="font-size: 20px; color: ${badgeColor}; margin-top: 0; text-align: center;">${alertTitle}</h2>
+        <p style="text-align: center; color: #666; line-height: 1.6;">Your system has detected a critical shift in inventory levels during processing.</p>
+        
+        <div style="margin: 30px 0; padding: 20px; border: 1px solid #eee; background-color: #f9f9f9; border-radius: 6px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 6px 0; font-size: 14px; color: #666; width: 35%;"><strong>Product Name:</strong></td>
+              <td style="padding: 6px 0; font-size: 14px; color: #1a1a1a; font-weight: bold;">${productName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; font-size: 14px; color: #666;"><strong>Variant Size:</strong></td>
+              <td style="padding: 6px 0; font-size: 14px; color: #1a1a1a;">${size ? `${size} inches` : "Standard"}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; font-size: 14px; color: #666;"><strong>Current Stock:</strong></td>
+              <td style="padding: 6px 0; font-size: 14px; color: ${badgeColor}; font-weight: bold;">${statusText}</td>
+            </tr>
+          </table>
+        </div>
+
+        <p style="color: #666; font-size: 14px; line-height: 1.5; text-align: center; margin-bottom: 30px;">${actionMessage}</p>
+
+        <div style="text-align: center;">
+          <a href="${process.env.FRONTEND_URL}/admin/products" style="background-color: #1a1a1a; color: #ffffff; padding: 14px 24px; text-decoration: none; font-weight: bold; border-radius: 4px; display: inline-block; font-size: 14px;">MANAGE INVENTORY</a>
+        </div>
+      </div>
+      <div style="background-color: #f4f4f4; padding: 15px; text-align: center;">
+        <p style="font-size: 11px; color: #999; margin: 0;">&copy; ${currentYear} Hair Language Official Store</p>
+      </div>
+    </div>
+  `;
+};
