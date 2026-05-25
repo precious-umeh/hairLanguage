@@ -282,8 +282,19 @@ export const otpTemplate = (name, otp, type = "registration") => {
   `;
 };
 
-export const orderReceivedTemplate = (order) => {
+export const orderReceivedTemplate = (order, isAdmin = false) => {
   const currentYear = new Date().getFullYear();
+
+  // Calculate the item subtotal dynamically so we don't rely on frontend matching discrepancies
+  const calculatedSubtotal = order.items.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0,
+  );
+
+  // Explicitly fetch tax and delivery fees from your schema, defaulting to 0 if not present
+  const taxFee = order.taxFee || 0;
+  const deliveryFee = order.deliveryFee || 0;
+
   const itemsHtml = order.items
     .map(
       (item) => `
@@ -300,17 +311,31 @@ export const orderReceivedTemplate = (order) => {
     )
     .join("");
 
+  // Dynamic content variables based on who is receiving the copy
+  const headlineText = isAdmin ? "New Order Alert!" : "Order Received!";
+  const introMessage = isAdmin
+    ? `An order has been registered on the platform from <strong>${order.email || "Guest Client"}</strong> and is currently awaiting transaction verification.`
+    : "Thank you for your order. We have received it and it's currently <strong>pending payment</strong>.";
+
+  const trackingLabel = isAdmin ? "ORDER REFERENCE ID" : "YOUR TRACKING ID";
+
+  const actionButtonUrl = isAdmin
+    ? `${process.env.FRONTEND_URL}/admin/orders`
+    : `${process.env.FRONTEND_URL}/pages/track-order`;
+
+  const actionButtonText = isAdmin ? "VIEW DASHBOARD" : "TRACK YOUR ORDER";
+
   return `
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e6e6e6; border-radius: 8px; overflow: hidden; background-color: #ffffff;">
       <div style="background-color: #1a1a1a; padding: 25px; text-align: center;">
         <h1 style="color: #ffffff; margin: 0; letter-spacing: 2px; font-size: 24px; text-transform: uppercase;">Hair Language</h1>
       </div>
       <div style="padding: 40px 30px;">
-        <h2 style="font-size: 20px; color: #1a1a1a; margin-top: 0; text-align: center;">Order Received!</h2>
-        <p style="text-align: center; color: #666;">Thank you for your order. We have received it and it's currently <strong>pending payment</strong>.</p>
+        <h2 style="font-size: 20px; color: #1a1a1a; margin-top: 0; text-align: center;">${headlineText}</h2>
+        <p style="text-align: center; color: #666;">${introMessage}</p>
         
         <div style="margin: 30px 0; padding: 20px; border: 1px dashed #ccc; background-color: #f9f9f9; text-align: center;">
-          <span style="display: block; font-size: 12px; color: #999; margin-bottom: 5px;">YOUR TRACKING ID</span>
+          <span style="display: block; font-size: 12px; color: #999; margin-bottom: 5px;">${trackingLabel}</span>
           <strong style="font-size: 18px; color: #1a1a1a; letter-spacing: 1px;">${order._id}</strong>
         </div>
 
@@ -324,13 +349,29 @@ export const orderReceivedTemplate = (order) => {
           <tbody>${itemsHtml}</tbody>
         </table>
 
-        <div style="text-align: right; margin-top: 20px;">
-          <p style="margin: 0; font-size: 14px; color: #666;">Total Amount</p>
-          <p style="margin: 0; font-size: 24px; font-weight: bold; color: #1a1a1a;">₦${order.totalAmount.toLocaleString()}</p>
+        <div style="width: 100%; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 4px 0; text-align: right; font-size: 14px; color: #666; width: 75%;">Subtotal:</td>
+              <td style="padding: 4px 0; text-align: right; font-size: 14px; color: #1a1a1a; font-weight: 500;">₦${calculatedSubtotal.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; text-align: right; font-size: 14px; color: #666;">VAT / Tax:</td>
+              <td style="padding: 4px 0; text-align: right; font-size: 14px; color: #1a1a1a; font-weight: 500;">₦${taxFee.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; text-align: right; font-size: 14px; color: #666; padding-bottom: 10px;">Delivery Fee:</td>
+              <td style="padding: 4px 0; text-align: right; font-size: 14px; color: #1a1a1a; font-weight: 500; padding-bottom: 10px;">₦${deliveryFee.toLocaleString()}</td>
+            </tr>
+            <tr style="border-top: 2px solid #1a1a1a;">
+              <td style="padding: 15px 0 0 0; text-align: right; font-size: 15px; font-weight: bold; color: #666;">Total Amount:</td>
+              <td style="padding: 15px 0 0 0; text-align: right; font-size: 24px; font-weight: bold; color: #1a1a1a;">₦${order.totalAmount.toLocaleString()}</td>
+            </tr>
+          </table>
         </div>
 
         <div style="margin-top: 40px; text-align: center;">
-          <a href="${process.env.FRONTEND_URL}/pages/track-order" style="background-color: #1a1a1a; color: #ffffff; padding: 15px 25px; text-decoration: none; font-weight: bold; border-radius: 4px; display: inline-block;">TRACK YOUR ORDER</a>
+          <a href="${actionButtonUrl}" style="background-color: #1a1a1a; color: #ffffff; padding: 15px 25px; text-decoration: none; font-weight: bold; border-radius: 4px; display: inline-block;">${actionButtonText}</a>
         </div>
       </div>
       <div style="background-color: #f4f4f4; padding: 15px; text-align: center;">
@@ -340,7 +381,32 @@ export const orderReceivedTemplate = (order) => {
   `;
 };
 
-export const paymentSuccessTemplate = (orderId, amount) => {
+export const paymentSuccessTemplate = (orderId, amount, isAdmin = false) => {
+  // Dynamic messaging depending on recipient
+  const titleText = isAdmin ? "Payment Captured" : "Payment Confirmed";
+
+  const descriptionHtml = isAdmin
+    ? `A payment of <strong>₦${amount.toLocaleString()}</strong> has been successfully captured and settled via Paystack for Order <strong>#${orderId}</strong>.`
+    : `We've successfully processed your payment of <strong>₦${amount.toLocaleString()}</strong> for Order <strong>#${orderId}</strong>.`;
+
+  const callToActionHtml = isAdmin
+    ? `<p style="color: #666; margin-bottom: 30px;">Log in to your dashboard to view fulfillment parameters and print shipping labels.</p>`
+    : `<p style="color: #666; margin-bottom: 30px;">Our team is now preparing your order for delivery!</p>`;
+
+  const signOffHtml = isAdmin
+    ? `
+        <div style="border-top: 1px solid #eee; padding-top: 20px;">
+          <p style="font-size: 12px; color: #7a7a7a; margin: 0;">Automated Store Ledger Registry</p>
+          <p style="font-weight: bold; margin: 5px 0 0 0; color: #1a1a1a;">Hair Language System</p>
+        </div>
+      `
+    : `
+        <div style="border-top: 1px solid #eee; padding-top: 20px;">
+          <p style="font-size: 14px; color: #7a7a7a; margin: 0;">Stay beautiful,</p>
+          <p style="font-weight: bold; margin: 5px 0 0 0; color: #1a1a1a;">Franscisca</p>
+        </div>
+      `;
+
   return `
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e6e6e6; border-radius: 8px; overflow: hidden; background-color: #ffffff;">
       <div style="background-color: #2e2e2e; padding: 25px; text-align: center;">
@@ -355,14 +421,11 @@ export const paymentSuccessTemplate = (orderId, amount) => {
           />
         </div>
 
-        <h2 style="font-size: 22px; color: #1a1a1a; margin-top: 0;">Payment Confirmed</h2>
-        <p style="color: #666; line-height: 1.6;">We've successfully processed your payment of <strong>₦${amount.toLocaleString()}</strong> for Order <strong>#${orderId}</strong>.</p>
-        <p style="color: #666; margin-bottom: 30px;">Our team is now preparing your order for delivery!</p>
+        <h2 style="font-size: 22px; color: #1a1a1a; margin-top: 0;">${titleText}</h2>
+        <p style="color: #666; line-height: 1.6;">${descriptionHtml}</p>
+        ${callToActionHtml}
         
-        <div style="border-top: 1px solid #eee; padding-top: 20px;">
-          <p style="font-size: 14px; color: #7a7a7a; margin: 0;">Stay beautiful,</p>
-          <p style="font-weight: bold; margin: 5px 0 0 0; color: #1a1a1a;">Franscisca</p>
-        </div>
+        ${signOffHtml}
       </div>
     </div>
   `;
