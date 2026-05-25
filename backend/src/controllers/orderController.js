@@ -3,6 +3,7 @@ import Product from "../models/product.js";
 import mongoose from "mongoose";
 import { sendEmail } from "../utils/sendEmail.js";
 import { orderReceivedTemplate } from "../utils/emailTemplates.js";
+import AdminSettings from "../models/adminSettings.js";
 
 // CREATE ORDER
 export async function createOrder(req, res) {
@@ -81,7 +82,27 @@ export async function createOrder(req, res) {
     // Run stock subtraction
     await subtractStock(orderItems);
 
-    // Send Email
+    // Admin Notification Preference
+    const systemConfig = await AdminSettings.findOne();
+    const allowOrderAlerts = systemConfig
+      ? systemConfig.notifications.newOrderAlerts
+      : true;
+
+    // Send Admin Email
+    if (allowOrderAlerts) {
+      try {
+        await sendEmail({
+          to: process.env.EMAIL_USER,
+          subject: `New Store Order Placed! - #${newOrder._id}`,
+          textContent: `Order value: ₦${newOrder.totalAmount}`,
+          htmlContent: orderReceivedTemplate(newOrder, true),
+        });
+      } catch (emailErr) {
+        console.error("Admin Order Notification Blocked:", emailErr);
+      }
+    }
+
+    // Send User Email
     try {
       await sendEmail({
         to: userEmail,
