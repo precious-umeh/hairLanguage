@@ -27,7 +27,7 @@ server.use("/api/cart", cartRoutes);
 server.use("/api/orders", orderRoutes);
 server.use("/api/transactions", transactionRoutes);
 server.use("/api/admin", adminRoutes);
-server.use("api/admin", adminSettingsRoutes);
+server.use("/api/admin", adminSettingsRoutes);
 
 connectDB();
 
