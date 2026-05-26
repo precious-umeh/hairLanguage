@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import server from "../../utils/axiosClient";
 import { Loader2 } from "lucide-react";
+import { useStoreSettings } from "@/providers/public/store-settings";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -29,13 +30,23 @@ const slideLeftVariant = {
 };
 
 export default function ContactUs() {
+  const { storeSettings } = useStoreSettings();
+
   const [contactData, setContactData] = useState({
     name: "",
     email: "",
     subject: "",
     message: "",
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const phone = storeSettings?.businessPhone || "+234 816 961 4621";
+  const email = storeSettings?.supportEmail || "info@hairlanguage.com";
+  const address =
+    storeSettings?.storeAddress ||
+    "Shop A22 Rossy Mall, Lekky County Homes, Ikota Lekki, Lagos.";
+  const openingHours = storeSettings?.openingHours || "";
 
   const handleChange = function (e) {
     const { name, value } = e.target;
@@ -92,23 +103,31 @@ export default function ContactUs() {
             </p>
 
             <p className="mb-3">
-              <strong>Phone:</strong> Text or Call &nbsp; +234 816 961 4621
-            </p>
-
-            <p className="mb-3">
-              <strong>Email:</strong> &nbsp;{" "}
-              <Link href="/" className="underline underline-offset-5">
-                hairlanguage@gmail.com
+              <strong>Phone:</strong> <span>Text or Call &nbsp;</span>
+              <Link
+                href={`tel:${phone}`}
+                className="underline underline-offset-5"
+              >
+                {phone}
               </Link>
             </p>
 
             <p className="mb-3">
-              <strong>Address:</strong> &nbsp; Shop A22 Rossy Mall, Lekky County
-              Homes, Ikota Lekki, Lagos.
+              <strong>Email:</strong> &nbsp;{" "}
+              <Link
+                href={`mailto:${email}`}
+                className="underline underline-offset-5"
+              >
+                {email}
+              </Link>
+            </p>
+
+            <p className="mb-3">
+              <strong>Address:</strong> &nbsp; {address}
             </p>
 
             <p>
-              <strong>Opening Hours:</strong> Mon - Sat: &nbsp; 9AM - 7PM
+              <strong>Opening Hours:</strong> &nbsp; {openingHours}
             </p>
 
             <p className="mt-4">
