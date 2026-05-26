@@ -6,6 +6,7 @@ import {
   Info,
   Link2,
   Loader2,
+  Clock,
   Mail,
   MapPin,
   Phone,
@@ -15,7 +16,7 @@ import {
   Store,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import socialLinks from "../data-sources/socialLinks";
+import initialSocialLinks from "../data-sources/socialLinks";
 import server, { BASE_URL } from "@/app/(main)/utils/axiosClient";
 import DeleteModal from "../components/deleteModal";
 import toast, { Toaster } from "react-hot-toast";
@@ -26,7 +27,7 @@ export default function SettingsPage() {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
   const [sessions, setSessions] = useState([]);
@@ -47,7 +48,20 @@ export default function SettingsPage() {
     newCustomerSignup: false,
     payoutConfirmations: true,
   });
+
+  const [formData, setFormData] = useState({
+    storeName: "Hair Language",
+    storeDescription: "",
+    supportEmail: "info@hairlanguage.com",
+    businessPhone: "+234 800 000 0000",
+    openingHours: "",
+    storeAddress: "",
+    maintenanceMode: false,
+  });
+
+  const [socialLinks, setSocialLinks] = useState(initialSocialLinks);
   const [activeTab, setActiveTab] = useState("general");
+
   const navTabs = [
     {
       id: "general",
@@ -66,25 +80,132 @@ export default function SettingsPage() {
     },
   ];
 
-  // Pull existing selections on component wake sequence
   useEffect(() => {
-    async function fetchPreferences() {
+    const loadInitialData = async () => {
       setLoading(true);
 
       try {
-        const res = await server.get("/api/admin/settings/notifications/get");
+        const [generalRes, notificationRes] = await Promise.all([
+          server.get("/api/admin/settings/general/public"),
+          server.get("/api/admin/settings/notifications/get"),
+        ]);
 
-        if (res.data.success) {
-          setPreferences(res.data.data);
+        // Process General Config Setup
+        const generalPayload = generalRes.data?.data ?? generalRes.data;
+
+        if (generalPayload) {
+          setFormData({
+            storeName: generalPayload.storeName || "Hair Language",
+            storeDescription: generalPayload.storeDescription || "",
+            supportEmail:
+              generalPayload.supportEmail || "info@hairlanguage.com",
+            businessPhone:
+              generalPayload.businessPhone || "+234 800 000 0000",
+            openingHours: generalPayload.openingHours || "",
+            storeAddress: generalPayload.storeAddress || "", // Correctly binds state values on refresh
+            maintenanceMode: generalPayload.maintenanceMode || false,
+          });
+
+          if (generalPayload.socials) {
+            setSocialLinks((prev) =>
+              prev.map((item) => ({
+                ...item,
+                defaultValue:
+                  generalPayload.socials[item.id] !== undefined
+                    ? generalPayload.socials[item.id]
+                    : item.defaultValue,
+              })),
+            );
+          }
+        }
+
+        // Process Notifications Settings Registry
+        if (notificationRes.data?.success) {
+          setPreferences(notificationRes.data.data);
         }
       } catch (error) {
-        console.error("Failed loading admin notification registries:", error);
+        console.error(
+          "Error loading system configurations concurrently:",
+          error,
+        );
+        toast.error("Failed to load initial configurations accurately.");
       } finally {
         setLoading(false);
       }
-    }
-    fetchPreferences();
+    };
+
+    loadInitialData();
   }, []);
+
+  // Handle Fetch Sessions
+  const fetchSessions = async function () {
+    setLoadingSessions(true);
+
+    try {
+      const response = await server.get("/auth/get-sessions");
+
+      if (response.data.success) {
+        setSessions(response.data.sessions);
+      }
+    } catch (error) {
+      toast.error("Could not load active sessions.");
+    } finally {
+      setLoadingSessions(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "security") {
+      fetchSessions();
+    }
+  }, [activeTab]);
+
+  // Handle social input change
+  const handleSocialInputChange = (id, value) => {
+    setSocialLinks((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, defaultValue: value } : item,
+      ),
+    );
+  };
+
+  // Handle input change
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  // Submit Handler
+  const handleSaveSettings = async () => {
+    try {
+      const socialsPayload = socialLinks.reduce((acc, current) => {
+        acc[current.id] = current.defaultValue;
+        return acc;
+      }, {});
+
+      const combinedPayload = {
+        ...formData,
+        socials: socialsPayload,
+      };
+
+      const token = localStorage.getItem("token");
+      await server.patch(
+        "/api/admin/settings/general/update",
+        combinedPayload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      toast.success("All configurations saved successfully!");
+    } catch (error) {
+      console.error("Failed to update general settings:", error);
+      toast.error("Error saving settings");
+    }
+  };
 
   // Update specific toggles dynamically
   const handleToggleChange = (key, value) => {
@@ -113,29 +234,6 @@ export default function SettingsPage() {
       setUpdating(false);
     }
   };
-
-  // Handle Fetch Sessions
-  const fetchSessions = async function () {
-    setLoadingSessions(true);
-
-    try {
-      const response = await server.get("/auth/get-sessions");
-
-      if (response.data.success) {
-        setSessions(response.data.sessions);
-      }
-    } catch (error) {
-      toast.error("Could not load active sessions.");
-    } finally {
-      setLoadingSessions(false);
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === "security") {
-      fetchSessions();
-    }
-  }, [activeTab]);
 
   // Handle Session Signout
   const handleSignOut = async function (sessionId) {
@@ -299,7 +397,9 @@ export default function SettingsPage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue="Hair Language"
+                    name="storeName"
+                    value={formData.storeName}
+                    onChange={handleInputChange}
                     className="w-full p-3.5 border border-(--coolGrey) rounded-2xl outline-(--accent) text-sm font-medium"
                   />
                 </div>
@@ -322,6 +422,9 @@ export default function SettingsPage() {
                   </label>
                   <textarea
                     rows={3}
+                    name="storeDescription"
+                    value={formData.storeDescription}
+                    onChange={handleInputChange}
                     className="w-full p-4 border border-(--coolGrey) rounded-2xl outline-(--accent) resize-none text-sm leading-relaxed"
                     placeholder="Briefly describe your brand..."
                   />
@@ -354,7 +457,9 @@ export default function SettingsPage() {
                   </div>
                   <input
                     type="email"
-                    defaultValue="support@hairlanguage.com"
+                    name="supportEmail"
+                    value={formData.supportEmail}
+                    onChange={handleInputChange}
                     className="bg-white md:bg-transparent p-3 md:p-0 rounded-xl md:rounded-none border md:border-b md:border-t-0 md:border-x-0 border-(--coolGrey) md:border-transparent focus:border-(--accent) outline-none text-sm font-semibold md:text-right"
                   />
                 </div>
@@ -371,7 +476,29 @@ export default function SettingsPage() {
                   </div>
                   <input
                     type="text"
-                    defaultValue="+234 800 000 0000"
+                    name="businessPhone"
+                    value={formData.businessPhone}
+                    onChange={handleInputChange}
+                    className="bg-white md:bg-transparent p-3 md:p-0 rounded-xl md:rounded-none border md:border-b md:border-t-0 md:border-x-0 border-(--coolGrey) md:border-transparent focus:border-(--accent) outline-none text-sm font-semibold md:text-right"
+                  />
+                </div>
+
+                <div className="flex flex-col md:flex-row md:items-center gap-4 p-4 bg-(--softAsh) rounded-2xl border border-(--coolGrey)">
+                  <div className="flex items-center gap-4 flex-1">
+                    <Clock className="text-(--accent) shrink-0" size={18} />
+                    <div className="flex-1">
+                      <p className="text-sm font-bold">Opening Hours</p>
+                      <p className="text-[11px] text-(--textMuted)">
+                        Shown on the contact page and footer.
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="text"
+                    name="openingHours"
+                    value={formData.openingHours}
+                    onChange={handleInputChange}
+                    placeholder="e.g. Mon - Sat: 9am - 7pm"
                     className="bg-white md:bg-transparent p-3 md:p-0 rounded-xl md:rounded-none border md:border-b md:border-t-0 md:border-x-0 border-(--coolGrey) md:border-transparent focus:border-(--accent) outline-none text-sm font-semibold md:text-right"
                   />
                 </div>
@@ -389,7 +516,10 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <textarea
-                    defaultValue="Shop A22, Rossy Mall, Lekky County Homes, Ikota Lekki, Lagos"
+                    name="storeAddress"
+                    value={formData.storeAddress}
+                    onChange={handleInputChange}
+                    // defaultValue="Shop A22, Rossy Mall, Lekky County Homes, Ikota Lekki, Lagos"
                     className="w-full bg-white md:bg-transparent p-3 md:p-0 rounded-xl md:rounded-none border md:border-b md:border-t-0 md:border-x-0 border-(--coolGrey) md:border-transparent focus:border-(--accent) outline-none text-sm font-semibold resize-none"
                     rows={2}
                   />
@@ -418,7 +548,7 @@ export default function SettingsPage() {
                       <img
                         src={`${BASE_URL}${platform.icon}`}
                         className="w-5 h-5 md:w-6 md:h-6 object-contain"
-                        alt=""
+                        alt={`${platform.label} Icon`}
                       />
                     </div>
                     <div className="w-px h-6 bg-(--lightSilver) hidden md:block" />
@@ -428,7 +558,10 @@ export default function SettingsPage() {
                       </p>
                       <input
                         type="text"
-                        defaultValue={platform.defaultValue}
+                        value={platform.defaultValue || ""}
+                        onChange={(e) =>
+                          handleSocialInputChange(platform.id, e.target.value)
+                        }
                         className="w-full bg-transparent outline-none text-sm font-semibold text-(--textColor) truncate"
                       />
                     </div>
@@ -457,7 +590,13 @@ export default function SettingsPage() {
                 </div>
 
                 <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                  <input type="checkbox" className="sr-only peer" />
+                  <input
+                    type="checkbox"
+                    name="maintenanceMode"
+                    checked={formData.maintenanceMode}
+                    onChange={handleInputChange}
+                    className="sr-only peer"
+                  />
                   <div
                     className="w-12 h-6 md:w-14 md:h-7 bg-(--coolGrey) peer-focus:outline-none rounded-full peer 
               peer-checked:after:translate-x-full peer-checked:after:border-white 
@@ -471,7 +610,10 @@ export default function SettingsPage() {
 
             {/* Global Save Button */}
             <div className="flex justify-end max-w-3xl pt-4">
-              <button className="w-full md:w-auto px-10 py-4 md:py-3 bg-(--accent) text-white rounded-2xl font-bold shadow-md hover:opacity-90 transition active:scale-95">
+              <button
+                onClick={handleSaveSettings}
+                className="w-full md:w-auto px-10 py-4 md:py-3 bg-(--accent) text-white rounded-2xl font-bold shadow-md hover:opacity-90 transition active:scale-95"
+              >
                 Save Settings
               </button>
             </div>
