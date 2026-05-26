@@ -8,6 +8,21 @@ const adminSettingsSchema = new mongoose.Schema(
       default: () =>
         process.env.EMAIL_USER || "preciouschukwuanugoumeh@gmail.com",
     },
+    general: {
+      storeName: { type: String, default: "Hair Language" },
+      storeDescription: { type: String, default: "" },
+      supportEmail: { type: String, default: "info@hairlanguage.com" },
+      businessPhone: { type: String, default: "+234 800 000 0000" },
+      openingHours: { type: String, default: "" },
+      storeAddress: { type: String, default: "" },
+      maintenanceMode: { type: Boolean, default: false },
+      socials: {
+        instagram: { type: String, default: "" },
+        tiktok: { type: String, default: "" },
+        facebook: { type: String, default: "" },
+        whatsapp: { type: String, default: "" },
+      },
+    },
     notifications: {
       newOrderAlerts: { type: Boolean, default: true },
       // orderCancellations: { type: Boolean, default: true },
