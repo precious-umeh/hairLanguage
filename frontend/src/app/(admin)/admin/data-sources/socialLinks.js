@@ -1,4 +1,4 @@
-const socialLinks = [
+const initialSocialLinks = [
   {
     id: "instagram",
     label: "Instagram",
@@ -25,4 +25,4 @@ const socialLinks = [
   },
 ];
 
-export default socialLinks;
+export default initialSocialLinks;
