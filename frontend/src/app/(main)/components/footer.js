@@ -13,6 +13,7 @@ import {
   Truck,
   Sparkles,
 } from "lucide-react";
+import { useStoreSettings } from "@/providers/public/store-settings";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,6 +22,23 @@ const inter = Inter({
 export default function Footer() {
   const year = new Date().getFullYear();
   const pathname = usePathname();
+
+  const { storeSettings } = useStoreSettings();
+
+  const socials = storeSettings?.socials || {};
+
+  // Decide final urls
+  const instagramUrl = socials.instagram || "#";
+  const facebookUrl = socials.facebook || "#";
+  const tiktokUrl = socials.tiktok || "#";
+  const whatsappUrl = socials.whatsapp || "#";
+
+  const address =
+    storeSettings?.storeAddress ||
+    "Shop A22 Rossy Mall, Lekky County Homes, Ikota Lekki, Lagos.";
+  const phone = storeSettings?.businessPhone || "+234 816 961 4621";
+  const email = storeSettings?.supportEmail || "info@hairlanguage.com";
+  const openingHours = storeSettings?.openingHours || "";
 
   return (
     <footer
@@ -94,27 +112,6 @@ export default function Footer() {
               Premium hair tailored to match your personal statement. Discover
               luxury collections built to look flawless.
             </p>
-
-            {/* <div className="pl-5 flex items-center gap-6">
-              <Link href="#">
-                <img
-                  src="/icons/icons8-facebook-logo-90.png"
-                  className="w-6 h-6"
-                />
-              </Link>
-              <Link href="#">
-                <img
-                  src="/icons/icons8-instagram-logo-90.png"
-                  className="w-6 h-6"
-                />
-              </Link>
-              <Link href="#">
-                <img
-                  src="/icons/icons8-whatsapp-logo-90.png"
-                  className="w-6 h-6"
-                />
-              </Link>
-            </div> */}
           </div>
 
           {/* Pil 2 - Quick Shop Links */}
@@ -207,10 +204,6 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
-
-            {/* <p className="w-[85%]">
-              Shop A22 Rossy Mall, Lekky County Homes, Ikota Lekki, Lagos.
-            </p> */}
           </div>
 
           {/* Pil 4 - Showroom Details */}
@@ -225,31 +218,29 @@ export default function Footer() {
                   size={16}
                   className="text-(--textMuted)/70 shrink-0 mt-0.5"
                 />
-                <span>
-                  Shop A22 Rossy Mall, Lekky County Homes, Ikota Lekki, Lagos.
-                </span>
+                <span>{address}</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone size={14} className="text-(--textMuted)/70 shrink-0" />
                 <a
-                  href="tel:+2348169614621"
+                  href={`tel:${phone}`}
                   className="hover:underline font-semibold font-mono text-(--textMuted)"
                 >
-                  +234 816 961 4621
+                  {phone}
                 </a>
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail size={14} className="text-(--textMuted)/70 shrink-0" />
                 <a
-                  href="mailto:hairlanguage@gmail.com"
+                  href={`mailto:${email}`}
                   className="hover:underline font-semibold text-(--textMuted)"
                 >
-                  hairlanguage@gmail.com
+                  {email}
                 </a>
               </li>
               <li className="flex items-center gap-2.5 border-t border-(--coolGrey) pt-2.5 mt-1">
                 <Clock size={14} className="text-(--textMuted)/70 shrink-0" />
-                <span>Mon - Sat: 9am &mdash; 7pm</span>
+                <span>{openingHours}</span>
               </li>
             </ul>
           </div>
@@ -266,7 +257,8 @@ export default function Footer() {
           {/* Social Icons Strip Group */}
           <div className="flex items-center gap-4">
             <Link
-              href="#"
+              href={facebookUrl}
+              target={facebookUrl !== "#" ? "_blank" : undefined}
               className="opacity-60 hover:opacity-100 transition-opacity"
             >
               <img
@@ -276,7 +268,8 @@ export default function Footer() {
               />
             </Link>
             <Link
-              href="#"
+              href={instagramUrl}
+              target={instagramUrl !== "#" ? "_blank" : undefined}
               className="opacity-60 hover:opacity-100 transition-opacity"
             >
               <img
@@ -286,7 +279,8 @@ export default function Footer() {
               />
             </Link>
             <Link
-              href="#"
+              href={whatsappUrl}
+              target={whatsappUrl !== "#" ? "_blank" : undefined}
               className="opacity-60 hover:opacity-100 transition-opacity"
             >
               <img
@@ -296,7 +290,8 @@ export default function Footer() {
               />
             </Link>
             <Link
-              href="#"
+              href={tiktokUrl}
+              target={tiktokUrl !== "#" ? "_blank" : undefined}
               className="opacity-60 hover:opacity-100 transition-opacity"
             >
               <img
