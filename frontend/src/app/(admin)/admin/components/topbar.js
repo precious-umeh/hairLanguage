@@ -8,11 +8,19 @@ import { navLinks } from "../data-sources/navLinks";
 import Link from "next/link";
 import { useAuth } from "@/providers/admin/auth-provider";
 import { BASE_URL } from "@/app/(main)/utils/axiosClient";
+import { useAdminSearch } from "@/providers/admin/admin-search-provider";
 
 export default function Topbar({ isOpen, toggleNav }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const pathname = usePathname();
   const { user } = useAuth();
+  const {
+    searchQuery,
+    setSearchQuery,
+    clearSearch,
+    isSearchEnabled,
+    searchPlaceholder,
+  } = useAdminSearch();
 
   // Helper to get initials
   const getInitials = (name) => {
@@ -104,16 +112,41 @@ export default function Topbar({ isOpen, toggleNav }) {
           className={`flex items-center gap-1 md:gap-6 ${isSearchOpen ? "opacity-0" : "opacity-100"}`}
         >
           {/* Search Trigger*/}
-          <button
-            onClick={() => setIsSearchOpen(true)}
-            className="p-2 md:bg-(--softAsh) md:px-3 md:py-1.5 md:rounded-full md:border 
-              md:border-(--lightSilver) flex items-center gap-2"
-          >
-            <Search size={16} className="text-(--textMuted) md:w-4 md:h-4" />
-            <span className="hidden lg:block outline-none text-sm w-40 text-(--textMuted) text-left">
-              Search...
-            </span>
-          </button>
+          {isSearchEnabled ? (
+            <>
+              {/* Desktop search input */}
+              <div className="hidden md:flex items-center gap-2 p-2 md:px-3 md:py-1.5 md:rounded-full md:border md:border-(--lightSilver) md:bg-(--softAsh)">
+                <Search size={16} className="text-(--textMuted) shrink-0" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  className="outline-none text-sm w-28 lg:w-52 bg-transparent text-(--textColor) placeholder:text-(--textMuted) placeholder:text-[10px]"
+                />
+
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="text-(--textMuted) hover:text(--textColor)"
+                    aria-label="Clear search"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* Mobile search trigger */}
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="p-2 md:hidden flex items-center gap-2"
+                aria-label="Open search"
+              >
+                <Search size={16} className="text-(--textMuted)" />
+              </button>
+            </>
+          ) : null}
 
           {/* Notifications */}
           <button className="p-2 text-(--textMuted) hover:text-(--textColor) transition-colors relative">
@@ -160,16 +193,19 @@ export default function Topbar({ isOpen, toggleNav }) {
       </nav>
 
       {/* Full Screen Mobile Search Overlay */}
-      {isSearchOpen && (
+      {isSearchOpen && isSearchEnabled && (
         <div className="absolute inset-0 bg-white flex items-center px-4 z-20">
           <div className="flex items-center gap-3 w-full bg-(--softAsh) px-4 py-2 rounded-xl border border-(--lightSilver)">
             <Search size={18} className="text-(--textMuted)" />
             <input
               autoFocus
-              className="bg-transparent outline-none text-sm w-full"
-              placeholder="Search Hair Language..."
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="bg-transparent outline-none text-sm w-full text-(--textColor)"
             />
-            <button onClick={() => setIsSearchOpen(false)}>
+            <button type="button" onClick={() => setIsSearchOpen(false)}>
               <X
                 size={18}
                 className="text-(--textMuted) hover:text-(--textColor)"
@@ -181,9 +217,3 @@ export default function Topbar({ isOpen, toggleNav }) {
     </header>
   );
 }
-
-/*
-<span className="absolute -top-0.5 -right-0.5 w-5.5 h-5.5 bg-red-600 rounded-full border border-white flex items-center justify-center text-[10px] font-bold text-white">
-                {totalUnread}
-              </span>
-*/
