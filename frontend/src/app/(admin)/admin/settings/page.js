@@ -379,7 +379,7 @@ export default function SettingsPage() {
          * */}
         {activeTab === "general" && (
           <div className="fade-up space-y-6 text-(--textColor)">
-            {/* Store Identity Section */}
+            {/* Store Identity Section (temporarily disabled)
             <section className="bg-white p-5 md:p-8 rounded-3xl border border-(--coolGrey) max-w-3xl">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2.5 bg-(--softAsh) rounded-xl shrink-0">
@@ -431,6 +431,7 @@ export default function SettingsPage() {
                 </div>
               </div>
             </section>
+            */}
 
             {/* Support & Contact Section */}
             <section className="bg-white p-5 md:p-8 rounded-3xl border border-(--coolGrey) max-w-3xl">
