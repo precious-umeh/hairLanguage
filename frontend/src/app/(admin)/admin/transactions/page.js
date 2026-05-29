@@ -10,7 +10,6 @@ import {
   ChevronRight,
   User,
   X,
-  CreditCard,
   AlertCircle,
   RefreshCw,
   Hash,
@@ -22,6 +21,7 @@ import { useNotifications } from "@/providers/admin/notification-provider";
 import toast, { Toaster } from "react-hot-toast";
 import { formatPrice } from "@/app/(main)/utils/formatPrice";
 import Link from "next/link";
+import { useAdminSearch } from "@/providers/admin/admin-search-provider";
 
 export default function Transactions() {
   // States
@@ -30,7 +30,8 @@ export default function Transactions() {
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+
+  const { searchQuery } = useAdminSearch();
 
   const { refreshAllCounts, lastUpdated } = useNotifications();
 
@@ -62,14 +63,24 @@ export default function Transactions() {
     fetchTransactions(false);
   }, [fetchTransactions]);
 
+  // Normalize search parameters safely
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
   // Filtering and Searching Logic
   const filteredTransactions = transactions.filter((tx) => {
+    // Safely extract string values for IDs even if populated as sub-documents
+    const orderIdString =
+      typeof tx.orderId === "object" && tx.orderId !== null
+        ? String(tx.orderId._id || "")
+        : String(tx.orderId || "");
+
     const matchesSearch =
-      tx.reference?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      String(tx.orderId || "")
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      !normalizedQuery ||
+      [tx.reference, tx.email, orderIdString]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(normalizedQuery);
 
     const matchesStatus = activeFilter === "all" || tx.status === activeFilter;
 
@@ -108,7 +119,8 @@ export default function Transactions() {
           </p>
           <p className="text-xs text-(--textMuted) mt-1 font-medium">
             Showing {filteredTransactions.length} total{" "}
-            {filteredTransactions === 1 ? "transaction" : "transactions"}
+            {filteredTransactions.length === 1 ? "transaction" : "transactions"}
+            {normalizedQuery ? ` matching "${searchQuery.trim()}".` : ""}
           </p>
         </div>
 
@@ -154,18 +166,8 @@ export default function Transactions() {
         </div>
       </section>
 
-      {/* SEARCH INPUT AND TOGGLE FILTER BAR */}
-      <section className="bg-white border border-(--lightSilver) p-3 rounded-2xl shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between mb-6">
-        <div className="w-full md:max-w-md">
-          <input
-            type="text"
-            placeholder="Search Reference, Email, or Order ID..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-gray-50 border border-(--lightSilver) rounded-xl py-2.5 px-4 text-xs font-medium outline-none focus:border-(--accent) focus:bg-white transition-all"
-          />
-        </div>
-
+      {/* FILTER BUTTON */}
+      <section className="bg-white border border-(--lightSilver) p-3 rounded-2xl shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between mb-6 w-fit">
         <div className="w-full md:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -213,7 +215,9 @@ export default function Transactions() {
             </div>
           ) : filteredTransactions.length === 0 ? (
             <p className="p-20 text-center text-(--textMuted) text-xs font-medium">
-              No transactions matched criteria.
+              {normalizedQuery
+                ? `No transactions found for "${searchQuery.trim()}"`
+                : "No transactions matched criteria."}
             </p>
           ) : (
             <div className="divide-y divide-gray-50">
