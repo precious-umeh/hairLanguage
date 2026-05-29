@@ -9,8 +9,8 @@ const adminSettingsSchema = new mongoose.Schema(
         process.env.EMAIL_USER || "preciouschukwuanugoumeh@gmail.com",
     },
     general: {
-      storeName: { type: String, default: "Hair Language" },
-      storeDescription: { type: String, default: "" },
+      // storeName: { type: String, default: "Hair Language" },
+      // storeDescription: { type: String, default: "" },
       supportEmail: { type: String, default: "info@hairlanguage.com" },
       businessPhone: { type: String, default: "+234 800 000 0000" },
       openingHours: { type: String, default: "" },

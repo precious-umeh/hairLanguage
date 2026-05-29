@@ -60,8 +60,8 @@ export async function getPublicStoreSettings(req, res) {
         success: true,
         message: "Storefront settings retrieved successfully.",
         data: {
-          storeName: "Hair Language",
-          storeDescription: "",
+          // storeName: "Hair Language",
+          // storeDescription: "",
           supportEmail: "info@hairlanguage.com",
           businessPhone: "+234 800 000 0000",
           openingHours: "",
@@ -90,8 +90,8 @@ export async function getPublicStoreSettings(req, res) {
 export async function updateGeneralSettings(req, res) {
   try {
     const {
-      storeName,
-      storeDescription,
+      // storeName,
+      // storeDescription,
       supportEmail,
       businessPhone,
       openingHours,
@@ -104,8 +104,8 @@ export async function updateGeneralSettings(req, res) {
       {},
       {
         $set: {
-          "general.storeName": storeName,
-          "general.storeDescription": storeDescription,
+          // "general.storeName": storeName,
+          // "general.storeDescription": storeDescription,
           "general.supportEmail": supportEmail,
           "general.businessPhone": businessPhone,
           "general.openingHours": openingHours,
