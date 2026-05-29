@@ -6,6 +6,7 @@ import { useProducts } from "@/providers/admin/product-provider";
 import { formatPrice } from "@/app/(main)/utils/formatPrice";
 import { useState } from "react";
 import DeleteModal from "../components/deleteModal";
+import { useAdminSearch } from "@/providers/admin/admin-search-provider";
 
 export default function Products() {
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -19,6 +20,26 @@ export default function Products() {
     deleteProduct,
     getTotalStock,
   } = useProducts();
+  const { searchQuery } = useAdminSearch();
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  const filteredProducts = products.filter((product) => {
+    if (!normalizedQuery) return true;
+
+    const haystack = [
+      product.productName,
+      product.description,
+      product.category,
+      product.wigType,
+      product.texture,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return haystack.includes(normalizedQuery);
+  });
 
   const handleDeleteConfirm = async () => {
     if (itemToDelete) {
@@ -39,8 +60,9 @@ export default function Products() {
             Track and manage your product catalog
           </p>
           <p className="text-xs text-(--textMuted) mt-1 font-medium">
-            Showing {products.length} total{" "}
-            {products.length === 1 ? "product" : "products"}
+            Showing {filteredProducts.length} total{" "}
+            {filteredProducts.length === 1 ? "product" : "products"}
+            {normalizedQuery ? ` matching "${searchQuery.trim()}` : ""}
           </p>
         </div>
 
@@ -61,15 +83,25 @@ export default function Products() {
 
       {/* Product List */}
       <div className="grid grid-cols-1 gap-6 mt-10">
-        {products.map((product) => (
-          <ProductItem
-            key={product._id}
-            product={product}
-            onEdit={edit}
-            onDelete={() => setItemToDelete(product)}
-            getTotalStock={getTotalStock}
-          />
-        ))}
+        {filteredProducts.length > 0 ? (
+          filteredProducts.map((product) => (
+            <ProductItem
+              key={product._id}
+              product={product}
+              onEdit={edit}
+              onDelete={() => setItemToDelete(product)}
+              getTotalStock={getTotalStock}
+            />
+          ))
+        ) : (
+          <div className="w-full bg-white shadow-sm border border-(--lightSilver) rounded-xl text-center py-16 text-(--textMuted) text-sm">
+            <p>
+              {normalizedQuery
+                ? `No products found for "${searchQuery.trim()}".`
+                : "No products yet."}
+            </p>
+          </div>
+        )}
       </div>
 
       {showProductModal && <AddProductModal />}
