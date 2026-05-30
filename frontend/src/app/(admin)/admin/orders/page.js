@@ -24,6 +24,7 @@ import toast, { Toaster } from "react-hot-toast";
 import DeleteModal from "../components/deleteModal";
 import { formatPrice } from "@/app/(main)/utils/formatPrice";
 import { useSearchParams } from "next/navigation";
+import { useAdminSearch } from "@/providers/admin/admin-search-provider";
 
 export default function Orders() {
   const searchParams = useSearchParams();
@@ -40,6 +41,9 @@ export default function Orders() {
   const [isUpdating, setIsUpdating] = useState(false);
 
   const { refreshAllCounts, lastUpdated } = useNotifications();
+  const { searchQuery } = useAdminSearch();
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
 
   // Fetch Orders
   const fetchOrders = useCallback(async function (isSilent = false) {
@@ -153,9 +157,28 @@ export default function Orders() {
     "delivered",
   ];
 
-  const filteredOrders = orders.filter((o) =>
-    activeFilter === "all" ? true : o.status === activeFilter,
-  );
+  const filteredOrders = orders.filter((order) => {
+    const matchesStatus =
+      activeFilter === "all" ? true : order.status === activeFilter;
+
+    if (!normalizedQuery) return matchesStatus;
+
+    const haystack = [
+      order._id,
+      order.email,
+      order.status,
+      order.shippingAddress?.address,
+      order.shippingAddress?.city,
+      order.shippingAddress?.state,
+      order.shippingAddress?.phone,
+      ...(order.items || []).map((item) => item.productName),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return matchesStatus && haystack.includes(normalizedQuery);
+  });
 
   const getStatusStyles = (status) => {
     switch (status) {
@@ -194,7 +217,8 @@ export default function Orders() {
           </p>
           <p className="text-xs text-(--textMuted) mt-1 font-medium">
             Showing {filteredOrders.length} total{" "}
-            {filteredOrders.length <= 1 ? "order" : "orders"}
+            {filteredOrders.length === 1 ? "order" : "orders"}
+            {normalizedQuery ? ` matching "${searchQuery.trim()}"` : ""}
           </p>
         </div>
 
@@ -330,7 +354,9 @@ export default function Orders() {
           ) : (
             <div className="py-20 text-center border border-dashed border-(--lightSilver) rounded-2xl">
               <p className="text-sm text-(--textMuted)">
-                No {activeFilter} orders found
+                {normalizedQuery
+                  ? `No orders found for "${searchQuery.trim()}".`
+                  : `No ${activeFilter} orders found`}
               </p>
             </div>
           )}
