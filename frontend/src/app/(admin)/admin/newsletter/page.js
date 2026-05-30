@@ -13,6 +13,7 @@ import {
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import DeleteModal from "../components/deleteModal";
+import { useAdminSearch } from "@/providers/admin/admin-search-provider";
 
 export default function NewsLetter() {
   const [subscribers, setSubscribers] = useState([]);
@@ -21,12 +22,8 @@ export default function NewsLetter() {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // COPY MALL MAILS TO CLIPBOARD
-  const copyAllMails = () => {
-    const allMails = subscribers.map((s) => s.email).join(", ");
-    navigator.clipboard.writeText(allMails);
-    toast.success("All mails copied to clipboard!");
-  };
+  const { searchQuery } = useAdminSearch();
+  const normalizedQuery = searchQuery.trim().toLowerCase();
 
   // FETCH SUBSCRIBERS
   const fetchSubscribers = async (isSilent = false) => {
@@ -74,19 +71,19 @@ export default function NewsLetter() {
     }
   };
 
-  // const delSubscriber = async (id) => {
-  //   try {
-  //     await server.delete(`/api/newsletter/${id}`);
+  // FILTER SUBSCRIBERS
+  const filteredSubscribers = subscribers.filter((sub) => {
+    if (!normalizedQuery) return true;
+    return sub.email?.toLowerCase().includes(normalizedQuery);
+  });
 
-  //     toast.success("Subscriber removed");
-
-  //     fetchSubscribers(true);
-  //   } catch (error) {
-  //     console.error(
-  //       `Error removing subscriber: ${error.response?.data?.message || error.message}`,
-  //     );
-  //   }
-  // };
+  // COPY MALL MAILS TO CLIPBOARD
+  const copyAllMails = () => {
+    const source = normalizedQuery ? filteredSubscribers : subscribers;
+    const allMails = source.map((s) => s.email).join(", ");
+    navigator.clipboard.writeText(allMails);
+    toast.success("All mails copied to clipboard!");
+  };
 
   // LOADING STATE
   if (loading)
@@ -112,7 +109,7 @@ export default function NewsLetter() {
               <Users size={22} className="text-(--accent)" />
               <span className="text-xl font-bold">{subscribers.length}</span>
               <span className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded-md font-bold">
-                {subscribers.length === 1
+                {filteredSubscribers.length === 1
                   ? "Active Subscriber"
                   : "Active Subscribers"}
               </span>
@@ -162,9 +159,9 @@ export default function NewsLetter() {
       </div>
 
       {/* SUBSCRIBERS LISTS */}
-      {subscribers.length > 0 ? (
+      {filteredSubscribers.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {subscribers.map((sub) => {
+          {filteredSubscribers.map((sub) => {
             return (
               <div
                 key={sub._id}
@@ -231,7 +228,9 @@ export default function NewsLetter() {
       ) : (
         <div className="py-20 text-center">
           <p className="text-(--textMuted) font-semibold text-sm">
-            No active subscribers found.
+            {normalizedQuery
+              ? `No subscribers found for "${searchQuery.trim()}".`
+              : "No active subscribers found."}
           </p>
         </div>
       )}
