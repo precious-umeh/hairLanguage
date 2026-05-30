@@ -16,6 +16,7 @@ import server from "@/app/(main)/utils/axiosClient";
 import { useNotifications } from "@/providers/admin/notification-provider";
 import toast, { Toaster } from "react-hot-toast";
 import DeleteModal from "../components/deleteModal";
+import { useAdminSearch } from "@/providers/admin/admin-search-provider";
 
 export default function Bookings() {
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -29,6 +30,9 @@ export default function Bookings() {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { setCounts, lastUpdated } = useNotifications();
+  const { searchQuery } = useAdminSearch();
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
 
   const fetchBookings = useCallback(async function (isSilent = false) {
     try {
@@ -181,10 +185,26 @@ export default function Bookings() {
   const filteredbookings = bookings.filter((booking) => {
     const status = booking.status?.toLowerCase();
 
-    if (activeFilter === "archived") return status === "archived";
-    if (activeFilter === "all") return status !== "archived";
+    let matchesFilter = false;
+    if (activeFilter === "archived") matchesFilter = status === "archived";
+    else if (activeFilter === "all") matchesFilter = status !== "archived";
+    else matchesFilter = status === activeFilter;
 
-    return status === activeFilter;
+    if (!normalizedQuery) return matchesFilter;
+
+    const haystack = [
+      booking.name,
+      booking.contact,
+      booking.message,
+      booking.status,
+      ...(booking.texture || []),
+      ...(booking.occasion || []),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return matchesFilter && haystack.includes(normalizedQuery);
   });
 
   // ARCHIVE FUNCTION
@@ -250,7 +270,8 @@ export default function Bookings() {
           </h2>
           <p className="text-xs text-(--textMuted) mt-1 font-medium">
             Showing {filteredbookings.length} total{" "}
-            {filteredbookings.length <= 1 ? "inquiry" : "inquiries"}
+            {filteredbookings.length === 1 ? "inquiry" : "inquiries"}
+            {normalizedQuery ? ` matching "${searchQuery.trim()}"` : ""}
           </p>
         </div>
 
@@ -400,7 +421,9 @@ export default function Bookings() {
         ) : (
           <div className="py-20 text-center border border-dashed border-(--lightSilver) rounded-2xl">
             <p className="text-sm text-(--textMuted)">
-              No {activeFilter} bookings found
+              {normalizedQuery
+                ? `No bookings found for "${searchQuery.trim()}".`
+                : `No ${activeFilter} bookings found`}
             </p>
           </div>
         )}
