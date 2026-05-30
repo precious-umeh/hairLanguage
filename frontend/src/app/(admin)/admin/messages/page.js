@@ -14,6 +14,7 @@ import {
 import server from "@/app/(main)/utils/axiosClient";
 import toast, { Toaster } from "react-hot-toast";
 import DeleteModal from "../components/deleteModal";
+import { useAdminSearch } from "@/providers/admin/admin-search-provider";
 
 export default function Messages() {
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -27,6 +28,9 @@ export default function Messages() {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { setCounts, lastUpdated } = useNotifications();
+  const { searchQuery } = useAdminSearch();
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
 
   // FETCH MESSAGES
   const fetchMessages = useCallback(async function (isSilent = false) {
@@ -151,10 +155,19 @@ export default function Messages() {
   const filteredMessages = messages.filter((msg) => {
     const status = msg.status?.toLowerCase();
 
-    if (activeFilter === "all") return status !== "archived";
-    if (activeFilter === "archived") return status === "archived";
+    let matchesFilter = false;
+    if (activeFilter === "all") matchesFilter = status !== "archived";
+    else if (activeFilter === "archived") matchesFilter = status === "archived";
+    else matchesFilter = status === activeFilter;
 
-    return status === activeFilter;
+    if (!normalizedQuery) return matchesFilter;
+
+    const haystack = [msg.name, msg.email, msg.subject, msg.message, msg.status]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return matchesFilter && haystack.includes(normalizedQuery);
   });
 
   // ARCHIVE FUNCTION
@@ -218,6 +231,7 @@ export default function Messages() {
           <p className="text-xs text-(--textMuted) mt-1 font-medium">
             Showing {filteredMessages.length} total{" "}
             {filteredMessages.length <= 1 ? "message" : "messages"}
+            {normalizedQuery ? ` matching "${searchQuery.trim()}"` : ""}
           </p>
         </div>
 
@@ -355,7 +369,9 @@ export default function Messages() {
         ) : (
           <div className="py-20 text-center border border-dashed border-(--lightSilver) rounded-2xl">
             <p className="text-sm text-(--textMuted)">
-              No {activeFilter} bookings found
+              {normalizedQuery
+                ? `No messages found for "${searchQuery.trim()}".`
+                : `No ${activeFilter} messages found`}
             </p>
           </div>
         )}
