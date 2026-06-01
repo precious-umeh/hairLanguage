@@ -1,5 +1,7 @@
 "use client";
+
 import { Playfair_Display, Inter } from "next/font/google";
+import ScrollReveal from "../components/ScrollReveal";
 import services from "../data-sources/services";
 
 const playfair = Playfair_Display({
@@ -12,7 +14,7 @@ const inter = Inter({
 
 export default function OurServices() {
   return (
-    <section className="py-20 px-10 space-y-6">
+    <ScrollReveal as="section" className="py-20 px-10 space-y-6 block">
       <div className="space-y-4">
         <h2
           className={`${playfair.className} text-4xl md:text-5xl text-(--textColor) font-semibold text-center tracking-wider`}
@@ -41,6 +43,6 @@ export default function OurServices() {
           </li>
         ))}
       </ul>
-    </section>
+    </ScrollReveal>
   );
 }
