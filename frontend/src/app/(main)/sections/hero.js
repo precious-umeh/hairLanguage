@@ -15,27 +15,27 @@ const containerVariant = {
   hidden: {},
   visible: {
     transition: {
-      staggerChildren: 0.4,
-      delayChildren: 0.1,
+      staggerChildren: 0.25,
+      delayChildren: 0.05,
     },
   },
 };
 
 const fadeUpVariant = {
-  hidden: { opacity: 0, y: 40 },
+  hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" },
+    transition: { type: "tween", duration: 0.6, ease: [0.25, 0.1, 0.25, 1] },
   },
 };
 
 const buttonVariant = {
-  hidden: { opacity: 0, y: 8 },
+  hidden: { opacity: 0, y: 6 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+    transition: { type: "tween", duration: 0.3, ease: [0.25, 0.1, 0.25, 1] },
   },
 };
 
