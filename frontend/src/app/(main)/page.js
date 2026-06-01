@@ -5,16 +5,29 @@ import HeroSection from "./sections/hero";
 import Newsletter from "./sections/newsletter";
 import OurServices from "./sections/ourServices";
 import Testimonials from "./sections/testimonials";
+import ScrollReveal from "./components/ScrollReveal";
 
 export default function Home() {
   return (
     <main>
       <HeroSection />
+
       <OurServices />
-      <BestSellers />
+
+      <ScrollReveal>
+        <BestSellers />
+      </ScrollReveal>
+
       <Collections />
-      <HairConsultation />
-      <Testimonials />
+
+      <ScrollReveal>
+        <HairConsultation />
+      </ScrollReveal>
+
+      <ScrollReveal>
+        <Testimonials />
+      </ScrollReveal>
+
       <Newsletter />
     </main>
   );
