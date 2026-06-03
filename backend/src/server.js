@@ -15,7 +15,22 @@ import adminSettingsRoutes from "./routes/adminSettingsRoutes.js";
 
 const server = express();
 server.use(express.json());
-server.use(cors());
+
+const allowedOrigins = [process.env.FRONTEND_URL].filter(Boolean);
+
+server.use(
+  cors({
+    origin(origin, callback) {
+      // Allow non-browser tools (Postman, mobile apps) with no Origin header
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // only if you use cookies; you use Bearer tokens mostly
+  }),
+);
 
 server.use("/api", productRoutes);
 server.use("/api", consultationRoutes);
