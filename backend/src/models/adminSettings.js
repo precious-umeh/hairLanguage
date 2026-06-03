@@ -5,8 +5,7 @@ const adminSettingsSchema = new mongoose.Schema(
     // Evaluates env variable, but falls back safely if the env isn't loaded yet
     adminEmail: {
       type: String,
-      default: () =>
-        process.env.EMAIL_USER || "preciouschukwuanugoumeh@gmail.com",
+      default: () => process.env.EMAIL_USER,
     },
     general: {
       // storeName: { type: String, default: "Hair Language" },
