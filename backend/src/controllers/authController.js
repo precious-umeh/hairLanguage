@@ -2,7 +2,7 @@ import User from "../models/user.js";
 import PendingUser from "../models/pendingUser.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import bcrypt from "bcrypt";
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import validator from "validator";
 import speakeasy from "speakeasy";
@@ -15,7 +15,7 @@ import Consultation from "../models/consultation.js";
 import Cart from "../models/cart.js";
 import AdminSettings from "../models/adminSettings.js";
 
-dotenv.config();
+// dotenv.config();
 
 const jwtSecret = process.env.JWT_SECRET;
 const tokenTimeout = process.env.TOKEN_TIMEOUT;
@@ -186,7 +186,7 @@ export async function verifyOtp(req, res) {
 
       if (allowSignupAlerts) {
         await sendEmail({
-          to: process.env.USER_EMAIL,
+          to: process.env.EMAIL_USER,
           subject: "New Client Registration - Hair Language",
           textContent: `${verifiedUser.name} (${verifiedUser.email}) has successfully verified their account.`,
           htmlContent: adminNewSignupTemplate(verifiedUser),
