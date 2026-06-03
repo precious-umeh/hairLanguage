@@ -15,6 +15,7 @@ import server from "@/app/(main)/utils/axiosClient";
 import toast, { Toaster } from "react-hot-toast";
 import DeleteModal from "../components/deleteModal";
 import { useAdminSearch } from "@/providers/admin/admin-search-provider";
+import { exportToCSV } from "../components/csvExporter";
 
 export default function Messages() {
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -170,6 +171,30 @@ export default function Messages() {
     return matchesFilter && haystack.includes(normalizedQuery);
   });
 
+  // CSV EXPORT HANDLER
+  const handleExportMessages = () => {
+    if (!filteredMessages || filteredMessages.length === 0) {
+      toast.error("No message data available to export.");
+      return;
+    }
+
+    const dataToExport = filteredMessages.map((msg) => {
+      return {
+        "Message ID": msg._id.toUpperCase(),
+        "Sender Name": msg.name,
+        "Sender Email": msg.email,
+        "Subject Line": msg.subject || "No Subject",
+        "Message Content": msg.message || "",
+        Status: msg.status.toUpperCase(),
+        "Received At": msg.createdAt
+          ? new Date(msg.createdAt).toLocaleString("en-NG")
+          : "N/A",
+      };
+    });
+
+    exportToCSV(dataToExport, `hair-language-messages-${activeFilter}.csv`);
+  };
+
   // ARCHIVE FUNCTION
   const archiveMessage = async (msg) => {
     const isArchived = msg.status === "archived";
@@ -236,7 +261,10 @@ export default function Messages() {
         </div>
 
         <div className="flex gap-2 w-full sm:w-auto">
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 text-xs bg-(--textColor) text-white rounded-xl font-semibold transition-all">
+          <button
+            onClick={handleExportMessages}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 text-xs bg-(--textColor) text-white rounded-xl font-semibold transition-all"
+          >
             <Download size={14} /> Export
           </button>
         </div>

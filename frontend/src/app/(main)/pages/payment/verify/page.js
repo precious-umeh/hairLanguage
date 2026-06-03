@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import server from "@/app/(main)/utils/axiosClient";
 import toast, { Toaster } from "react-hot-toast";
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default function VerifyPaymentPage() {
+export function VerifyPaymentPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState("verifying"); // verifying, success, error
@@ -86,12 +86,6 @@ export default function VerifyPaymentPage() {
           </p>
 
           <div className="flex flex-col gap-3">
-            {/* <button
-              onClick={() => router.push("/profile")}
-              className="w-full bg-(--textColor) text-white py-4 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2"
-            >
-              <ShoppingBag size={18} /> View My Orders
-            </button> */}
             <button
               onClick={() =>
                 router.push(isGuest ? "/pages/track-order" : "/profile")
@@ -164,5 +158,24 @@ export default function VerifyPaymentPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function VerifyPaymentPageWrapper() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex flex-col items-center justify-center min-h-[80vh] text-center py-20 px-6">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-16 h-16 text-(--accent) animate-spin opacity-40" />
+            <h2 className="text-2xl font-semibold text-(--textColor)">
+              Loading payment secure gateway...
+            </h2>
+          </div>
+        </main>
+      }
+    >
+      <VerifyPaymentPage />
+    </Suspense>
   );
 }

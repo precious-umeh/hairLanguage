@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import server from "@/app/(main)/utils/axiosClient";
 import toast, { Toaster } from "react-hot-toast";
@@ -8,7 +8,7 @@ import { Mail, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/providers/admin/auth-provider";
 
-export default function VerifyOtp() {
+export function VerifyOtp() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const email = searchParams.get("email") || "";
@@ -192,5 +192,21 @@ export default function VerifyOtp() {
         </div>
       </div>
     </section>
+  );
+}
+
+export default function VerifyOtpPageWrapper() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full min-h-screen flex justify-center items-center">
+          <p className="text-xs font-medium text-gray-500 animate-pulse">
+            Loading verification security layers...
+          </p>
+        </div>
+      }
+    >
+      <VerifyOtp />
+    </Suspense>
   );
 }

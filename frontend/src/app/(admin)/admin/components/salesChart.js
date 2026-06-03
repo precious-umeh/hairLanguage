@@ -53,9 +53,19 @@ export default function SalesChart({ chartData = [] }) {
             tickLine={false}
             tick={{ fill: "#6b6b6b", fontSize: 12 }}
             // Format the Y-Axis tick markers clean into currency metrics (e.g. 50k instead of 50000)
-            tickFormatter={(value) =>
-              value >= 1000 ? `₦${(value / 1000).toFixed(0)}k` : `₦${value}`
-            }
+            tickFormatter={(value) => {
+              if (value >= 1000000) {
+                // If it divides cleanly with no remainder (like 1,000,000), show "1M" instead of "1.0M"
+                const millions = value / 1000000;
+                return `₦${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M`;
+              }
+
+              if (value >= 1000) {
+                return `₦${(value / 1000).toFixed(0)}k`;
+              }
+
+              return `₦${value}`;
+            }}
           />
           <Tooltip
             formatter={(value) => [formatPrice(value), "Gross Revenue"]}

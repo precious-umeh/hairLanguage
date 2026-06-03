@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatPrice } from "../../utils/formatPrice";
-import server from "../../utils/axiosClient";
+import server, { assetUrl } from "../../utils/axiosClient";
 
 export default async function RecommendedProducts({ currentProduct }) {
   let products = [];
@@ -41,14 +41,13 @@ export default async function RecommendedProducts({ currentProduct }) {
         {recommended.map((product) => {
           const firstImage = product.images[0];
           const secondImage = product.images[1];
-          const BASE_URL = "http://127.0.0.1:5500";
 
           return (
             <div key={product.id} className="w-full group cursor-pointer">
               <Link href={`/shop/${product.id}`} className="block">
                 <div className={`w-full aspect-square rounded-lg relative`}>
                   <img
-                    src={`${BASE_URL}${firstImage}`}
+                    src={assetUrl(firstImage)}
                     alt={product.productName}
                     className="w-full h-full rounded-lg object-cover"
                   />
@@ -59,7 +58,7 @@ export default async function RecommendedProducts({ currentProduct }) {
                       md:group-hover:opacity-100 transition-all duration-300`}
                     >
                       <img
-                        src={`${BASE_URL}${secondImage}`}
+                        src={assetUrl(secondImage)}
                         alt={product.productName}
                         className="w-full h-full object-cover rounded-lg"
                       />
@@ -82,40 +81,3 @@ export default async function RecommendedProducts({ currentProduct }) {
     </main>
   );
 }
-
-/*
-  const recommended = useMemo(() => {
-    // Filter out the currentProduct
-    const otherProducts = products.filter((p) => p.id !== currentProduct.id);
-
-    // Prefer products from the same category
-    const sameCategory = otherProducts.filter(
-      (p) => p.category === currentProduct.category,
-    );
-
-    // Shuffle products array
-    const shuffleProducts = (arr) => {
-      return [...arr].sort(() => 0.5 - Math.random());
-    };
-
-    // Pick 4 products from same category
-    let recommendedProducts = shuffleProducts(sameCategory).slice(0, 4);
-
-    // Fill with other random products if recommendedProducts isn't enough
-    if (recommendedProducts.length < 4) {
-      const needed = 4 - recommendedProducts.length;
-
-      Look through all other products, remove the ones we already recommended, 
-         shuffle the rest randomly, and pick only the number of products we still 
-         need.
-      
-      const remaining = shuffleProducts(otherProducts)
-        .filter((p) => !recommendedProducts.some((r) => r.id === p.id))
-        .slice(0, needed);
-
-      recommendedProducts = [...recommendedProducts, ...remaining];
-    }
-
-    return recommendedProducts;
-  }, [currentProduct.id, currentProduct.category, products]);
-*/

@@ -3,14 +3,7 @@
 import { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import server from "../../utils/axiosClient";
-import {
-  Package,
-  Truck,
-  CheckCircle2,
-  ChevronLeft,
-  Calendar,
-  Hash,
-} from "lucide-react";
+import { Package, ChevronLeft, Hash } from "lucide-react";
 import { formatPrice } from "../../utils/formatPrice";
 
 export default function TrackOrder() {

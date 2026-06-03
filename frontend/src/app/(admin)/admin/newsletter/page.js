@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import DeleteModal from "../components/deleteModal";
 import { useAdminSearch } from "@/providers/admin/admin-search-provider";
+import { exportToCSV } from "../components/csvExporter";
 
 export default function NewsLetter() {
   const [subscribers, setSubscribers] = useState([]);
@@ -85,6 +86,31 @@ export default function NewsLetter() {
     toast.success("All mails copied to clipboard!");
   };
 
+  // CSV EXPORT HANDLER
+  const handleExportNewsletter = () => {
+    if (!filteredSubscribers || filteredSubscribers.length === 0) {
+      toast.error("No subscriber data available to export.");
+      return;
+    }
+
+    const dataToExport = filteredSubscribers.map((sub, index) => {
+      return {
+        "S/N": index + 1,
+        "Subscriber ID": sub._id.toUpperCase(),
+        "Email Address": sub.email,
+        "Subscribed Date": sub.subscribedAt
+          ? new Date(sub.subscribedAt).toLocaleDateString("en-NG", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })
+          : "N/A",
+      };
+    });
+
+    exportToCSV(dataToExport, "hair-language-newsletter-subscribers.csv");
+  };
+
   // LOADING STATE
   if (loading)
     return (
@@ -126,6 +152,7 @@ export default function NewsLetter() {
               <Copy size={14} /> <span className="">Copy All</span>
             </button>
             <button
+              onClick={handleExportNewsletter}
               className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 
             text-xs bg-(--textColor) text-white rounded-xl font-bold hover:opacity-90 
             transition-all"

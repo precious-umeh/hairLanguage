@@ -1,17 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { assetUrl } from "../../utils/axiosClient";
 
 export default function ProductGallery({ images, productName }) {
   const [selectedImage, setSelectedImage] = useState(images[0]);
-  const BASE_URL = "http://127.0.0.1:5500";
 
   return (
     <div className="flex flex-col gap-6">
       {/* Main Image */}
       <div className={`relative w-full aspect-5/7 rounded-lg overflow-hidden`}>
         <img
-          src={`${BASE_URL}${selectedImage}`}
+          src={assetUrl(selectedImage)}
           alt={productName}
           className="w-full h-full object-cover rounded-lg"
         />
@@ -31,7 +31,7 @@ export default function ProductGallery({ images, productName }) {
             >
               <div className={`w-full h-full rounded-md`}>
                 <img
-                  src={`${BASE_URL}${img}`}
+                  src={assetUrl(img)}
                   alt="thumbnail"
                   className="object-cover"
                 />

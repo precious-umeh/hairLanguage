@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2, ArrowLeft, RefreshCw } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import server from "@/app/(main)/utils/axiosClient";
 
-export default function ForgotPassword() {
+export function ForgotPassword() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -71,23 +71,6 @@ export default function ForgotPassword() {
       setLoading(false);
     }
   };
-
-  // const handleRequestOtp = async (e) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-
-  //   try {
-  //     await server.post("/auth/forgot-password", { email: formData.email });
-
-  //     toast.success("Verification code sent!");
-
-  //     setStep(2);
-  //   } catch (error) {
-  //     toast.error(error.response?.data?.message || "Failed to send code.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   // Step 1: Reset OTP
   const handleRequestOtp = async (e) => {
@@ -265,5 +248,19 @@ export default function ForgotPassword() {
         </div>
       </div>
     </section>
+  );
+}
+
+export default function ForgotPasswordPageWrapper() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full min-h-screen flex justify-center items-center">
+          <Loader2 className="animate-spin text-(--accent)" size={32} />
+        </div>
+      }
+    >
+      <ForgotPassword />
+    </Suspense>
   );
 }

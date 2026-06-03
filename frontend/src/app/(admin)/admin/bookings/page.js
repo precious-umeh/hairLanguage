@@ -17,6 +17,7 @@ import { useNotifications } from "@/providers/admin/notification-provider";
 import toast, { Toaster } from "react-hot-toast";
 import DeleteModal from "../components/deleteModal";
 import { useAdminSearch } from "@/providers/admin/admin-search-provider";
+import { exportToCSV } from "../components/csvExporter";
 
 export default function Bookings() {
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -207,6 +208,41 @@ export default function Bookings() {
     return matchesFilter && haystack.includes(normalizedQuery);
   });
 
+  // CSV EXPORT HANDLER
+  const handleExportBookings = () => {
+    if (!filteredbookings || filteredbookings.length === 0) {
+      toast.error("No booking data available to export.");
+      return;
+    }
+
+    const dataToExport = filteredbookings.map((booking) => {
+      // Flatten arrays like textures and occasions into comma-separated text blocks
+      const preferredTextures = Array.isArray(booking.texture)
+        ? booking.texture.join(", ")
+        : booking.texture || "N/A";
+
+      const occasionsList = Array.isArray(booking.occasion)
+        ? booking.occasion.join(", ")
+        : booking.occasion || "N/A";
+
+      return {
+        "Booking ID": booking._id.toUpperCase(),
+        "Customer Name": booking.name,
+        "Contact Info (Phone/Email)": booking.contact,
+        Status: booking.status.toUpperCase(),
+        "Preferred Textures": preferredTextures,
+        Occasion: occasionsList,
+        "Customer Message": booking.message || "",
+        "Submitted At": booking.createdAt
+          ? new Date(booking.createdAt).toLocaleDateString("en-NG")
+          : "N/A",
+        "User Deleted Account": booking.deletedByUser ? "Yes" : "No",
+      };
+    });
+
+    exportToCSV(dataToExport, `hair-language-bookings-${activeFilter}.csv`);
+  };
+
   // ARCHIVE FUNCTION
   const archiveBooking = async (booking) => {
     const isArchived = booking.status === "archived";
@@ -277,6 +313,7 @@ export default function Bookings() {
 
         <div className="flex gap-2 w-full sm:w-auto">
           <button
+            onClick={handleExportBookings}
             className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 
               text-xs bg-(--textColor) text-white rounded-xl font-semibold transition-all"
           >

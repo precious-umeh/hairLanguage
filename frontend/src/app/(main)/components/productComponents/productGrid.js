@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import ProductPopup from "./productPopUp";
 import { formatPrice } from "../../utils/formatPrice";
-import { BASE_URL } from "../../utils/axiosClient";
+import { assetUrl } from "../../utils/axiosClient";
 
 export default function ProductGrid({ products }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -18,6 +18,12 @@ export default function ProductGrid({ products }) {
           const firstImage = product.images[0];
           const secondImage = product.images[1];
 
+          // Check if all lengths are out of stock
+          const isTotallyOutOfStock =
+            product.lengths && product.lengths.length > 0
+              ? product.lengths.every((len) => len.inventory <= 0)
+              : true; // Defaults to out of stock if lengths array is empty
+
           return (
             <div
               key={product._id}
@@ -25,8 +31,15 @@ export default function ProductGrid({ products }) {
             >
               <Link href={`/shop/${product.slug}`} className="block">
                 <div className={`w-full aspect-5/7 rounded-lg relative`}>
+                  {/* Out of Stock Visual Badge */}
+                  {isTotallyOutOfStock && (
+                    <div className="absolute top-2 left-2 z-10 bg-(--textColor) text-white text-[10px] font-bold uppercase px-2 py-1 rounded shadow-md">
+                      Sold Out
+                    </div>
+                  )}
+
                   <img
-                    src={`${BASE_URL}${firstImage}`}
+                    src={assetUrl(firstImage)}
                     alt={product.productName}
                     className="w-full h-full object-cover rounded-lg"
                   />
@@ -37,7 +50,7 @@ export default function ProductGrid({ products }) {
                       md:group-hover:opacity-100 transition-all duration-300`}
                     >
                       <img
-                        src={`${BASE_URL}${secondImage}`}
+                        src={assetUrl(secondImage)}
                         alt={product.productName}
                         className="w-full h-full object-cover rounded-lg"
                       />
@@ -60,11 +73,15 @@ export default function ProductGrid({ products }) {
               </Link>
 
               <button
+                disabled={isTotallyOutOfStock}
                 onClick={() => setSelectedProduct(product)}
-                className="w-full bg-(--accent) text-white rounded-lg py-2 px-6 cursor-pointer md:scale-95 
-                    md:hover:scale-100 transition-transform duration-300"
+                className={`w-full rounded-lg py-2 px-6 transition-transform duration-300 ${
+                  isTotallyOutOfStock
+                    ? "bg-(--coolGrey) text-(--textColor) cursor-not-allowed opacity-70 scale-100"
+                    : "bg-(--accent) text-white cursor-pointer md:scale-95 md:hover:scale-100"
+                }`}
               >
-                Choose Options
+                {isTotallyOutOfStock ? "Out of Stock" : "Choose Options"}
               </button>
             </div>
           );

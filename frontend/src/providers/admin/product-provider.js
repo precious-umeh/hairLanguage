@@ -1,7 +1,7 @@
 "use client";
 
 import { useContext, createContext, useState, useEffect } from "react";
-import server from "@/app/(main)/utils/axiosClient";
+import server, { assetUrl, BASE_URL } from "@/app/(main)/utils/axiosClient";
 import toast, { Toaster } from "react-hot-toast";
 import { useSWRConfig } from "swr";
 
@@ -233,7 +233,7 @@ export function ProductProvider({ children }) {
         if (img instanceof File) {
           formData.append("images", img);
         } else if (typeof img === "string") {
-          const cleanedPath = img.replace("http://127.0.0.1:5500", "");
+          const cleanedPath = img.replace(BASE_URL, "");
           formData.append("images", cleanedPath);
         }
       });
@@ -285,11 +285,7 @@ export function ProductProvider({ children }) {
       ) || [];
     setSelectedColorIds(colorIds);
 
-    setImages(
-      product.images.map((img) =>
-        img.startsWith("http") ? img : `http://127.0.0.1:5500${img}`,
-      ),
-    );
+    setImages(product.images.map((img) => assetUrl(img)));
 
     setEditingId(product._id);
     setShowProductModal(true);
@@ -329,7 +325,7 @@ export function ProductProvider({ children }) {
         if (img instanceof File) {
           formData.append("images", img);
         } else if (typeof img === "string") {
-          const cleanedPath = img.replace("http://127.0.0.1:5500", "");
+          const cleanedPath = img.replace(BASE_URL, "");
           formData.append("images", cleanedPath);
         }
       });

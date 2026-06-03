@@ -4,7 +4,6 @@ import { Inter } from "next/font/google";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-  MoveRight,
   Mail,
   Phone,
   MapPin,

@@ -7,6 +7,7 @@ import { formatPrice } from "@/app/(main)/utils/formatPrice";
 import { useState } from "react";
 import DeleteModal from "../components/deleteModal";
 import { useAdminSearch } from "@/providers/admin/admin-search-provider";
+import { assetUrl } from "@/app/(main)/utils/axiosClient";
 
 export default function Products() {
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -125,9 +126,7 @@ export default function Products() {
  */
 function ProductItem({ product, onDelete, onEdit, getTotalStock }) {
   const firstImage = product.images?.[0]
-    ? product.images[0].startsWith("http")
-      ? product.images[0]
-      : `http://127.0.0.1:5500${product.images[0]}`
+    ? assetUrl(product.images[0])
     : "https://via.placeholder.com/150";
 
   const totalStock = getTotalStock(product);

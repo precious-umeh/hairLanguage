@@ -62,6 +62,8 @@ export default function ProductDetailsPage({ product }) {
     }
   };
 
+  const isOutOfStock = selectedLength?.inventory <= 0 || quantity < 1;
+
   return (
     <main
       className={`px-[5vw] pt-15 ${inter.className} text-(--textColor) font-semibold`}
@@ -144,9 +146,13 @@ export default function ProductDetailsPage({ product }) {
 
             <button
               onClick={handleBuyNow}
-              disabled={loading || quantity < 1}
-              className="w-full text-center py-2 px-6 bg-(--accent) rounded-lg text-white scale-99 
-              hover:scale-100 transition-all duration-200 cursor-pointer"
+              disabled={loading || isOutOfStock}
+              className={`w-full text-center py-2 px-6  rounded-lg  scale-99 
+                transition-all duration-200 ${
+                  loading || isOutOfStock
+                    ? "bg-(--coolGrey) text-(--textColor) cursor-not-allowed opacity-50"
+                    : "bg-(--accent) text-white hover:scale-100 cursor-pointer"
+                }`}
             >
               {loading ? "Processing..." : "Buy now"}
             </button>

@@ -1,10 +1,17 @@
 import axios from "axios";
 
-export const BASE_URL = "http://127.0.0.1:5500";
+export const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:5500";
 
 const server = axios.create({
   baseURL: BASE_URL,
 });
+
+export function assetUrl(path) {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return `${BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+}
 
 /**
  * Request Interceptor:

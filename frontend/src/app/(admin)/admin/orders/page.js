@@ -25,6 +25,7 @@ import DeleteModal from "../components/deleteModal";
 import { formatPrice } from "@/app/(main)/utils/formatPrice";
 import { useSearchParams } from "next/navigation";
 import { useAdminSearch } from "@/providers/admin/admin-search-provider";
+import { exportToCSV } from "../components/csvExporter";
 
 export default function Orders() {
   const searchParams = useSearchParams();
@@ -180,6 +181,37 @@ export default function Orders() {
     return matchesStatus && haystack.includes(normalizedQuery);
   });
 
+  // CSV EXPORT HANDLER
+  const handleExportOrders = () => {
+    if (!filteredOrders || filteredOrders === 0) {
+      toast.error("No data available to export.");
+      return;
+    }
+
+    const dataToExport = filteredOrders.map((order) => {
+      // Flatten out the nested order items array into a nice string
+      const itemsSummary = order.items
+        .map((item) => `${item.quantity}x ${item.productName} (${item.size})`)
+        .join(" | ");
+
+      return {
+        "Order ID": order._id.toUpperCase(),
+        "Customer Email": order.email,
+        Status: order.status.toUpperCase(),
+        "Total Amount": order.totalAmount,
+        "Total Items": order.items.length,
+        "Items Summary": itemsSummary,
+        "Phone Number": order.shippingAddress?.phone || "N/A",
+        "Delivery Address": order.shippingAddress?.address || "N/A",
+        City: order.shippingAddress?.city || "N/A",
+        State: order.shippingAddress?.state || "N/A",
+        "User Deleted Account": order.deletedByUser ? "Yes" : "No",
+      };
+    });
+
+    exportToCSV(dataToExport, `hair-language-orders-${activeFilter}.csv`);
+  };
+
   const getStatusStyles = (status) => {
     switch (status) {
       case "paid":
@@ -223,7 +255,10 @@ export default function Orders() {
         </div>
 
         <div className="flex gap-2 w-full sm:w-auto">
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 text-xs bg-(--textColor) text-white rounded-xl font-semibold transition-all">
+          <button
+            onClick={handleExportOrders}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 text-xs bg-(--textColor) text-white rounded-xl font-semibold transition-all"
+          >
             <Download size={14} /> Export
           </button>
         </div>

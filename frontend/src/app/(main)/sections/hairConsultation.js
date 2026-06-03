@@ -18,7 +18,7 @@ export default function HairConsultation() {
     >
       <div className="max-w-300 mx-auto grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-10">
         <img
-          src="./images/different-looks.png"
+          src="/images/different-looks.png"
           alt="Woman unsure of which hairstyle to choose"
           className="order-2 lg:order-1 w-full max-h-105 object-cover border-2 border-(--accent) rounded-lg shadow-2xl"
         />

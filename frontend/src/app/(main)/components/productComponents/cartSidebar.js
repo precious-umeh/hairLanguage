@@ -1,12 +1,11 @@
 "use client";
 
-import { X, ShoppingBag, Trash2, Handbag } from "lucide-react";
+import { X, Trash2, Handbag } from "lucide-react";
 import { useCart } from "@/providers/public/cart-provider";
-import QuantitySelector, { CartQuantitySelector } from "./quantitySelector";
-import Link from "next/link";
+import QuantitySelector from "./quantitySelector";
 import { formatPrice } from "../../utils/formatPrice";
 import { useEffect } from "react";
-import { BASE_URL } from "../../utils/axiosClient";
+import { assetUrl } from "../../utils/axiosClient";
 import { useRouter } from "next/navigation";
 
 export default function CartSidebar() {
@@ -101,10 +100,7 @@ export default function CartSidebar() {
                     {/* Product Image */}
                     <div className="w-24 h-24 bg-(--softAsh) rounded-lg overflow-hidden shrink-0">
                       <img
-                        src={
-                          `${BASE_URL}${item.productId.images?.[0]}` ||
-                          item.image
-                        }
+                        src={assetUrl(item.productId.images?.[0]) || item.image}
                         alt={item.productId.name}
                         className="w-full h-full object-cover"
                       />
@@ -139,21 +135,6 @@ export default function CartSidebar() {
                       </div>
 
                       <div className="flex justify-between items-center mt-2">
-                        {/* <CartQuantitySelector
-                          count={item.quantity}
-                          onUpdate={(newVal) =>
-                            updateCart(
-                              item.productId._id || item.productId,
-                              newVal,
-                              // item.selectedLength || null,
-                              normalizeLength(item.selectedLength),
-                              normalizeColor(item.selectedColor),
-                              // item.selectedColor?._id ||
-                              //   item.selectedColor ||
-                              //   null,
-                            )
-                          }
-                        /> */}
                         <QuantitySelector
                           variant="compact"
                           count={item.quantity}
