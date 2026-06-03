@@ -18,16 +18,28 @@ export async function initializePayment(req, res) {
       return res.status(404).json({ message: "Order not found." });
     }
 
-    console.log(
-      "Redirecting to:",
-      `${process.env.FRONTEND_URL}/pages/payment/verify`,
-    );
+    // Paystack & Frontend guard (In a case where the env files fails to load.)
+    if (!process.env.PAYSTACK_SECRET_KEY) {
+      return res.status(500).json({
+        success: false,
+        message: "Payment is not configured. Missing PAYSTACK_SECRET_KEY.",
+      });
+    }
+
+    if (!process.env.FRONTEND_URL) {
+      return res.status(500).json({
+        success: false,
+        message: "Payment is not configured. Missing FRONTEND_URL",
+      });
+    }
+
+    const frontendBase = process.env.FRONTEND_URL.replace(/\/$/, "");
 
     const params = {
       email: order.email,
       amount: order.totalAmount * 100,
       reference: `HL-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      callback_url: `${process.env.FRONTEND_URL}/pages/payment/verify`, // Where Paystack redirects after payment
+      callback_url: `${frontendBase}/pages/payment/verify`, // Where Paystack redirects after payment
       metadata: {
         orderId: order._id,
         userId: order.userId || null,
@@ -75,6 +87,14 @@ export async function verifyPayment(req, res) {
         Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
       },
     });
+
+    // Paystack guard
+    if (!process.env.PAYSTACK_SECRET_KEY) {
+      return res.status(500).json({
+        success: false,
+        message: "Payment is not configured. Missing PAYSTACK_SECRET_KEY.",
+      });
+    }
 
     const data = response.data.data;
 
