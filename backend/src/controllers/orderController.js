@@ -397,10 +397,10 @@ async function subtractStock(items) {
           if (currentInventory === 0 && allowOutOfStock) {
             await sendEmail({
               to: process.env.EMAIL_USER,
-              subject: `🚨 Out of Stock: ${updatedProduct.name} (${item.size}")`,
-              textContent: `The variant size (${item.size})" for ${updatedProduct.name} is completely sold out!`,
+              subject: `🚨 Out of Stock: ${updatedProduct.productName} (${item.size}")`,
+              textContent: `The variant size (${item.size})" for ${updatedProduct.productName} is completely sold out!`,
               htmlContent: adminInventoryAlertTemplate(
-                updatedProduct.name,
+                updatedProduct.productName,
                 item.size,
                 0,
                 "outOfStock",
@@ -413,10 +413,10 @@ async function subtractStock(items) {
           ) {
             await sendEmail({
               to: process.env.EMAIL_USER,
-              subject: `⚠ Low Stock Warning: ${updatedProduct.name} (${item.size}")`,
-              textContent: `Low stock alert! Only ${currentInventory} units left for ${updatedProduct.name} - size ${item.size}".`,
+              subject: `⚠ Low Stock Warning: ${updatedProduct.productName} (${item.size}")`,
+              textContent: `Low stock alert! Only ${currentInventory} units left for ${updatedProduct.productName} - size ${item.size}".`,
               htmlContent: adminInventoryAlertTemplate(
-                updatedProduct.name,
+                updatedProduct.productName,
                 item.size,
                 currentInventory,
                 "lowStockWarning",
@@ -447,8 +447,8 @@ async function subtractStock(items) {
         if (currentInventory === 0 && allowOutOfStock) {
           await sendEmail({
             to: process.env.EMAIL_USER,
-            subject: `🚨 Out of Stock: ${updatedProduct.name}`,
-            textContent: `${updatedProduct.name} is completely sold out!`,
+            subject: `🚨 Out of Stock: ${updatedProduct.productName}`,
+            textContent: `${updatedProduct.productName} is completely sold out!`,
             htmlContent: adminInventoryAlertTemplate(
               updatedProduct.name,
               null,
@@ -463,10 +463,10 @@ async function subtractStock(items) {
         ) {
           await sendEmail({
             to: process.env.EMAIL_USER,
-            subject: `⚠️ Low Stock Warning: ${updatedProduct.name}`,
-            textContent: `Low stock alert! Only ${currentInventory} units left for ${updatedProduct.name}.`,
+            subject: `⚠️ Low Stock Warning: ${updatedProduct.productName}`,
+            textContent: `Low stock alert! Only ${currentInventory} units left for ${updatedProduct.productName}.`,
             htmlContent: adminInventoryAlertTemplate(
-              updatedProduct.name,
+              updatedProduct.productName,
               null,
               currentInventory,
               "lowStockWarning",
