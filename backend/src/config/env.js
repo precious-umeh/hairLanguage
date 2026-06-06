@@ -10,6 +10,9 @@ const required = [
   "EMAIL_PASS",
   "PAYSTACK_SECRET_KEY",
   "FRONTEND_URL",
+  "CLOUDINARY_CLOUD_NAME",
+  "CLOUDINARY_API_KEY",
+  "CLOUDINARY_API_SECRET",
 ];
 
 const missing = required.filter((key) => !process.env[key]?.trim());
@@ -31,4 +34,7 @@ export const env = {
   paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
   frontendUrl: process.env.FRONTEND_URL.replace(/\/$/, ""),
   adminUrL: process.env.ADMIN_URL,
+  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
+  cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
+  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
 };
