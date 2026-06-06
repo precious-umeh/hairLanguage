@@ -1,6 +1,7 @@
 import Product from "../models/product.js";
 import fs from "fs";
 import path from "path";
+import { deleteFromCloudinary } from "../middlewares/file-upload.js";
 
 const LENGTH_GROUPS = {
   short: { min: 8, max: 14 },
@@ -62,7 +63,9 @@ export async function getProducts(req, res) {
     if (texture) query.texture = texture;
     if (type) query.wigType = type;
 
-    const products = await Product.find(query).populate("availableColors").lean();
+    const products = await Product.find(query)
+      .populate("availableColors")
+      .lean();
 
     const inStockOnly = isTruthyFlag(inStock) || isTruthyFlag(hideOutOfStock);
     const lengthRange = getLengthRange(length);
@@ -109,9 +112,7 @@ export async function getProducts(req, res) {
         return {
           ...product,
           lengths:
-            inStockOnly || lengthRange
-              ? visibleLengths
-              : product.lengths,
+            inStockOnly || lengthRange ? visibleLengths : product.lengths,
         };
       })
       .filter(Boolean);
@@ -208,9 +209,11 @@ const prepareProductData = (req) => {
     }
   }
 
-  const newImages = req.files
-    ? req.files.map((f) => `/uploads/${f.filename}`)
-    : [];
+  // const newImages = req.files
+  //   ? req.files.map((f) => `/uploads/${f.filename}`)
+  //   : [];
+
+  const newImages = req.files ? req.files.map((f) => f.path) : [];
 
   let existingImages = [];
   if (data.images) {
@@ -317,6 +320,8 @@ export async function deleteProduct(req, res) {
               console.log(`Successfully deleted: ${imagePath}`);
             }
           });
+        } else if (imagePath.includes("cloudinary.com")) {
+          deleteFromCloudinary(imagePath);
         }
       });
     }

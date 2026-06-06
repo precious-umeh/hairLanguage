@@ -14,6 +14,7 @@ import {
 import Consultation from "../models/consultation.js";
 import Cart from "../models/cart.js";
 import AdminSettings from "../models/adminSettings.js";
+import { deleteFromCloudinary } from "../middlewares/file-upload.js";
 
 // dotenv.config();
 
@@ -43,9 +44,11 @@ export async function register(req, res) {
     const emailNormalized = email.toLowerCase().trim();
     const nameNormalized = name.trim();
 
-    let avatar = req.file
-      ? `/uploads/${req.file.filename}`
-      : "/uploads/user.png";
+    // let avatar = req.file
+    //   ? `/uploads/${req.file.filename}`
+    //   : "/uploads/user.png";
+
+    let avatar = req.file ? req.file.path : "/uploads/user.png";
 
     const existingUser = await User.findOne({ email: emailNormalized });
     if (existingUser) {
@@ -417,9 +420,11 @@ export async function registerAdmin(req, res) {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const avatar = req.file
-      ? `/uploads/${req.file.filename}`
-      : "/uploads/user.png";
+    // const avatar = req.file
+    //   ? `/uploads/${req.file.filename}`
+    //   : "/uploads/user.png";
+
+    const avatar = req.file ? req.file.path : "/uploads/user.png";
 
     const user = new User({
       email,
@@ -630,7 +635,9 @@ export async function updateProfile(req, res) {
     // Handle name and avatar update
     if (name) user.name = name.trim();
     if (req.file) {
-      user.avatar = `/uploads/${req.file.filename}`;
+      // user.avatar = `/uploads/${req.file.filename}`;
+
+      user.avatar = req.file.path;
     }
 
     // If email changed, trigger otp verification
@@ -872,8 +879,32 @@ export async function deleteAccount(req, res) {
       return res.status(404).json({ message: "User not found." });
     }
 
-    await User.findByIdAndDelete(userId);
+    // Delete custom profile image from Cloudinary or local disk
+    if (user.avatar) {
+      if (user.avatar.includes("cloudinary.com")) {
+        // Delete from Cloudinary
+        await deleteFromCloudinary(user.avatar);
+      } else if (
+        user.avatar.startsWith("/uploads") &&
+        user.avatar !== "uploads/user.png"
+      ) {
+        // Delete local custom files (fallback for legacy local uploads)
+        const fullPath = path.join(process.cwd(), user.avatar);
+        fs.unlink(fullPath, (err) => {
+          if (err) {
+            console.error(
+              `Failed to delete local avatar at ${fullPath}:`,
+              err.message,
+            );
+          } else {
+            console.log(`Successfully deleted local avatar: ${user.avatar}`);
+          }
+        });
+      }
+    }
 
+    // Delete database record
+    await User.findByIdAndDelete(userId);
     await PendingUser.deleteOne({ email: user.email });
 
     res.clearCookie("token");
