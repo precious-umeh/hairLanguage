@@ -8,7 +8,7 @@ import { env } from "./src/config/env.js";
 
 // dotenv.config();
 
-const port = process.env.PORT || 5500;
+// const port = process.env.PORT || 5500;
 const filename = fileURLToPath(import.meta.url);
 const directoryName = path.dirname(filename);
 
