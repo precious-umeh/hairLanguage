@@ -7,7 +7,7 @@ import {
   getProducts,
   updateProduct,
 } from "../controllers/productController.js";
-import upload from "../middlewares/file-upload.js";
+import upload, { uploadToCloudinary } from "../middlewares/file-upload.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 import adminMiddleWare from "../middlewares/adminMiddleware.js";
 
@@ -21,6 +21,7 @@ router.post(
   authMiddleware,
   adminMiddleWare,
   upload.array("images", 10),
+  uploadToCloudinary,
   addProduct,
 );
 router.patch(
@@ -28,6 +29,7 @@ router.patch(
   authMiddleware,
   adminMiddleWare,
   upload.array("images", 10),
+  uploadToCloudinary,
   updateProduct,
 );
 router.delete("/products/:id", authMiddleware, adminMiddleWare, deleteProduct);

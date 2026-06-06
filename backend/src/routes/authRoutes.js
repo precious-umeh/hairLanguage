@@ -22,18 +22,29 @@ import {
   verifyAndEnable2FA,
   verifyOtp,
 } from "../controllers/authController.js";
-import upload from "../middlewares/file-upload.js";
+import upload, { uploadToCloudinary } from "../middlewares/file-upload.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 import { emailLimiter } from "../middlewares/emailRateLimiter.js";
 import adminMiddleWare from "../middlewares/adminMiddleware.js";
 
 const router = express.Router();
 
-router.post("/register", upload.single("avatar"), emailLimiter, register);
+router.post(
+  "/register",
+  upload.single("avatar"),
+  uploadToCloudinary,
+  emailLimiter,
+  register,
+);
 router.post("/verify-otp", verifyOtp);
 router.post("/resend-otp", emailLimiter, resendOtp);
 router.post("/login", emailLimiter, login);
-router.post("/register-admin", upload.single("avatar"), registerAdmin);
+router.post(
+  "/register-admin",
+  upload.single("avatar"),
+  uploadToCloudinary,
+  registerAdmin,
+);
 router.post("/login-admin", loginAdmin);
 router.post("/logout", authMiddleware, logout);
 router.post("/cancel-email-update", authMiddleware, cancelEmailUpdate);
@@ -52,6 +63,7 @@ router.patch(
   "/update-profile",
   authMiddleware,
   upload.single("avatar"),
+  uploadToCloudinary,
   updateProfile,
 );
 router.patch("/change-password", authMiddleware, changePassword);
