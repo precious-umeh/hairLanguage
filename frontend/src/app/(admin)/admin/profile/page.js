@@ -245,10 +245,18 @@ export default function AdminProfilePage() {
           <div className="relative group">
             <div className="w-32 h-32 rounded-2xl overflow-hidden border-4 border-white shadow-md">
               <img
+                // src={
+                //   previewUrl ||
+                //   `${BASE_URL}${user?.avatar}` ||
+                //   "/images/user.png"
+                // }
                 src={
                   previewUrl ||
-                  `${BASE_URL}${user?.avatar}` ||
-                  "/images/user.png"
+                  (user?.avatar
+                    ? user.avatar.startsWith("http")
+                      ? user.avatar
+                      : `${BASE_URL}${user.avatar}`
+                    : "images/user.png")
                 }
                 alt="Avatar"
                 className="h-full w-full object-cover"
@@ -363,7 +371,12 @@ export default function AdminProfilePage() {
                   <div className="flex items-center gap-4 p-4 bg-(--softAsh) rounded-2xl border border-dashed border-(--coolGrey)">
                     <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-white shadow-sm shrink-0">
                       <img
-                        src={previewUrl || `${BASE_URL}${user?.avatar}`}
+                        // src={previewUrl || `${BASE_URL}${user?.avatar}`}
+                        src={
+                          user.avatar.startsWith("http")
+                            ? user.avatar
+                            : `${BASE_URL}${user.avatar}`
+                        }
                         alt="Preview"
                         className="h-full w-full object-cover"
                       />

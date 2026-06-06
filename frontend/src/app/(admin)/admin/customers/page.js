@@ -92,7 +92,12 @@ export default function Customers() {
                     shadow-sm relative"
                   >
                     <img
-                      src={`${BASE_URL}${user.avatar}`}
+                      // src={`${BASE_URL}${user.avatar}`}
+                      src={
+                        user.avatar.startsWith("http")
+                          ? user.avatar
+                          : `${BASE_URL}${user.avatar}`
+                      }
                       alt="Avatar"
                       className="w-full h-full object-cover rounded"
                     />

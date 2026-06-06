@@ -100,7 +100,12 @@ export default function ProductPopup({ product, onClose }) {
           {/* Product Image */}
           <div className={`w-full aspect-5/7 rounded-lg`}>
             <img
-              src={`${BASE_URL}${product.images[0]}`}
+              // src={`${BASE_URL}${product.images[0]}`}
+              src={
+                product.images[0]?.startsWith("http")
+                  ? product.images[0]
+                  : `${BASE_URL}${product.images[0]}`
+              }
               alt={product.productName}
               className="w-full h-full object-cover rounded-lg"
             />

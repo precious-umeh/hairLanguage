@@ -213,7 +213,12 @@ export default function CheckoutPage() {
                     className="flex gap-4 items-center group border-b border-(--softAsh) pb-4 last:border-0"
                   >
                     <img
-                      src={`${BASE_URL}${item.productId.images[0]}`}
+                      // src={`${BASE_URL}${item.productId.images[0]}`}
+                      src={
+                        item.productId.images[0]?.startsWith("http")
+                          ? item.productId.images[0]
+                          : `${BASE_URL}${item.productId.images[0]}`
+                      }
                       alt={item.productId.productName}
                       className="w-16 h-16 object-cover rounded-lg"
                     />
