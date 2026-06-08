@@ -32,11 +32,11 @@ export default function BestSellers() {
               <div className="aspect-5/7 relative group">
                 <video
                   muted
-                  autoPlay
+                  autoPlay={true}
                   loop
                   playsInline // CRITICAL: This stops the auto-fullscreen on iPhone
                   preload="auto"
-                  src={bs.video}
+                  src={`${bs.video}#t=0.001`} // Appends timeline anchor to force safari frame compilation
                   className="w-full h-full object-cover rounded-lg border-2 border-(--accent)"
                 />
 
