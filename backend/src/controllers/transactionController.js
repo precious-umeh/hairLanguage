@@ -10,14 +10,6 @@ const PAYSTACK_URL = "https://api.paystack.co/transaction";
 // INITIALIZE TRANSACTION
 export async function initializePayment(req, res) {
   try {
-    const { orderId } = req.body;
-
-    // Fetch the order to geth the exact amount and email
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ message: "Order not found." });
-    }
-
     // Paystack & Frontend guard (In a case where the env files fails to load.)
     if (!process.env.PAYSTACK_SECRET_KEY) {
       return res.status(500).json({
@@ -33,6 +25,14 @@ export async function initializePayment(req, res) {
       });
     }
 
+    const { orderId } = req.body;
+
+    // Fetch the order to geth the exact amount and email
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found." });
+    }
+
     const frontendBase = process.env.FRONTEND_URL.replace(/\/$/, "");
 
     const params = {
@@ -46,6 +46,7 @@ export async function initializePayment(req, res) {
       },
     };
 
+    // Request authorization URL from Paystack API
     const response = await axios.post(`${PAYSTACK_URL}/initialize`, params, {
       headers: {
         Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
@@ -54,13 +55,17 @@ export async function initializePayment(req, res) {
     });
 
     // Create a pending transaction record
-    await Transaction.create({
+    // By removing the 'await', Node.js spins this write operation into the background thread.
+    Transaction.create({
       orderId: order._id,
       userId: order.userId || null,
       email: order.email,
       amount: order.totalAmount,
       reference: params.reference,
       status: "pending",
+    }).catch((dbErr) => {
+      // Catch errors silently so a minor DB logging error doesn't break checkout execution
+      console.error("Background Transaction Creation Failed:", dbErr.message);
     });
 
     // Send the Paystack authorization url to the Frontend
@@ -80,14 +85,6 @@ export async function initializePayment(req, res) {
 // VERIFY TRANSACTION
 export async function verifyPayment(req, res) {
   try {
-    const { reference } = req.params;
-
-    const response = await axios.get(`${PAYSTACK_URL}/verify/${reference}`, {
-      headers: {
-        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-      },
-    });
-
     // Paystack guard
     if (!process.env.PAYSTACK_SECRET_KEY) {
       return res.status(500).json({
@@ -95,6 +92,14 @@ export async function verifyPayment(req, res) {
         message: "Payment is not configured. Missing PAYSTACK_SECRET_KEY.",
       });
     }
+
+    const { reference } = req.params;
+
+    const response = await axios.get(`${PAYSTACK_URL}/verify/${reference}`, {
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      },
+    });
 
     const data = response.data.data;
 
