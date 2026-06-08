@@ -175,15 +175,29 @@ export function ProductProvider({ children }) {
 
   // Handle length inventory change
   const handleLengthInventoryChange = (size, newInventory) => {
-    const numericInventory = newInventory === "" ? 0 : Number(newInventory);
+    // FIX: If the field is blank, keep it as "" so the user can backspace completely.
+    // Otherwise, parse it as a Base-10 Integer which handles stripping out anomalies like "01" -> 1.
+    const sanitizedInventory =
+      newInventory === "" ? "" : parseInt(newInventory, 10);
 
     setProductForm((prev) => ({
       ...prev,
       lengths: prev.lengths.map((l) =>
-        l.size === size ? { ...l, inventory: numericInventory } : l,
+        l.size === size ? { ...l, inventory: sanitizedInventory } : l,
       ),
     }));
   };
+
+  // const handleLengthInventoryChange = (size, newInventory) => {
+  //   const numericInventory = newInventory === "" ? 0 : Number(newInventory);
+
+  //   setProductForm((prev) => ({
+  //     ...prev,
+  //     lengths: prev.lengths.map((l) =>
+  //       l.size === size ? { ...l, inventory: numericInventory } : l,
+  //     ),
+  //   }));
+  // };
 
   // Get total stock
   const getTotalStock = (product) => {
@@ -223,7 +237,13 @@ export function ProductProvider({ children }) {
         }
       });
 
-      formData.append("lengths", JSON.stringify(productForm.lengths));
+      // Convert any blank inventory back to 0 for MongoDB right before stringifying
+      const sanitizedLengths = productForm.lengths.map((l) => ({
+        ...l,
+        inventory: l.inventory === "" ? 0 : Number(l.inventory),
+      }));
+
+      formData.append("lengths", JSON.stringify(sanitizedLengths));
 
       selectedColorIds.forEach((id) => {
         formData.append("availableColors", id);
@@ -318,7 +338,13 @@ export function ProductProvider({ children }) {
         }
       });
 
-      formData.append("lengths", JSON.stringify(productForm.lengths));
+      // Convert any blank inventory back to 0 for updates
+      const sanitizedLengths = productForm.lengths.map((l) => ({
+        ...l,
+        inventory: l.inventory === "" ? 0 : Number(l.inventory),
+      }));
+
+      formData.append("lengths", JSON.stringify(sanitizedLengths));
       selectedColorIds.forEach((id) => formData.append("availableColors", id));
 
       images.forEach((img) => {

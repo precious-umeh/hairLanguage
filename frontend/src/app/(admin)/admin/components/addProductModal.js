@@ -275,13 +275,22 @@ export default function AddProductModal() {
                                   <input
                                     type="number"
                                     placeholder="Stock"
-                                    value={selectedLength.inventory}
+                                    value={
+                                      selectedLength.inventory === 0
+                                        ? ""
+                                        : selectedLength.inventory
+                                    }
                                     onChange={(e) =>
                                       handleLengthInventoryChange(
                                         inch,
                                         e.target.value,
                                       )
                                     }
+                                    onFocus={(e) => {
+                                      if (Number(e.target.value) === 0) {
+                                        handleLengthInventoryChange(inch, "");
+                                      }
+                                    }}
                                     className="w-16 p-1 text-xs outline-none"
                                   />
                                 </div>
