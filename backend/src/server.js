@@ -44,6 +44,14 @@ server.use("/api/transactions", transactionRoutes);
 server.use("/api/admin", adminRoutes);
 server.use("/api/admin", adminSettingsRoutes);
 
+// Health Check Route to stop render from shutting down every 15mins
+server.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 connectDB();
 
 export default server;
